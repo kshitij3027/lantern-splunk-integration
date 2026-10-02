@@ -1,36 +1,103 @@
 # Narrated walkthrough — target 3:40
 
-This is a rehearsal script for the supplied assessment export in the local prototype. Use the submitted README and input path in the reviewer ZIP. The public repository contains only synthetic examples; those produce different counts. The final narrated take should follow live verification and two rehearsals.
+The final video pairs eight fixed narration blocks with real terminal and Splunk footage. Capture the actions silently first; remove loading/navigation pauses during editing, then narrate over the completed movie with webcam in OBS. The recording operator need not execute every action within the final playback timestamps.
+
+This script describes the supplied assessment export. Public synthetic examples produce different counts. The illustrated private recording guide contains the exact local paths, selected finding/host, browser links, and reference screenshots; assessment records and screenshots remain outside this public repository.
+
+**Capture status:** an isolated demo source has been prepared and verified empty. Its first import is pending. The success statements below are conditional on the actual new capture matching the expected results. Earlier live verification and the silent Splunk reference remain separate evidence.
 
 ## Before recording
 
-Start local Splunk and sign in. Have the assessment findings already imported and independently verified. Open the three private saved reports, select All time, and pick one high/critical unreviewed finding with useful related host/hash evidence. Keep one original input record and the readable validation report available beside Splunk. Close unrelated browser tabs and notifications. Hide all configuration/token files and do not show developer tools or authenticated request headers.
+Start Splunk, sign in, and use All time for historical detection dates. Configure a dedicated demo source in a private profile and use a separate unused acceptance ledger. Scope every browser search to that same source. Keep earlier imported data and its ledger intact. An empty review queue alone does not establish an empty source: also check the source-wide event count.
 
-Prepare these two commands, substituting private local paths before recording:
+Install the project with its test dependencies using the README. Activate its virtual environment and work from the project root. For the portable commands below, `input/events.json` is the supplied file in the reviewer ZIP, `local.toml` is the prepared private demo profile, and `output/demo-delivery.sqlite` is the unused demo ledger. Substitute those paths for your environment before recording.
 
-```sh
-lantern-splunk send --input input/events.json --dry-run --output output/demo-preview
-lantern-splunk send --input input/events.json --config local.toml --state output/delivery.sqlite --output output/demo-replay
-```
-
-Use the **same ledger that performed the original import** for the replay. A fresh ledger would resend events. In the developer workspace, the assessment input, profile, and ledger are in the private paths recorded in the private runbook. Dry run and replay return 2 because the supplied file has quality issues; they still complete successfully. Do not present a replay as a first import.
+OBS must capture both Terminal and Chrome; the earlier Chrome-only reference scene does not capture Terminal. Keep audio muted for the silent source clips. Use readable text, close unrelated tabs, and keep configuration/token files off screen. Hold completed outputs long enough to read. Do not repeat a first import just to repair video timing.
 
 ## Timeline, actions, and narration
 
 | Time | Action on screen | Narration |
 |---|---|---|
-| 0:00–0:25 | Open Splunk's current review queue; title visible, All time selected | “This prototype brings Lantern findings into the place a security analyst already works: Splunk. Lantern has already matched detection rules against files. My integration makes those findings searchable, preserves the evidence, and helps the analyst distinguish an urgent match from a match that has already been reviewed.” |
-| 0:25–0:55 | Run dry-run command; show terminal summary and report location | “The operator supplies a JSON export to a small Python importer. It validates the entire file before sending anything. This file contains two hundred rows: one hundred ninety-three are usable, including thirty-three with warnings. Seven are quarantined because essential information is missing or finding identities conflict. Every row remains accounted for.” |
-| 0:55–1:25 | Open readable validation report; show one quarantine reason and one warning | “Quarantine means preserving the original row with a reason and withholding it from the normal findings dataset. A usable finding with questionable evidence stays visible with a warning. For example, I preserve inconsistent file-size or pattern-offset evidence instead of pretending I can repair it. The report supports the person operating the integration.” |
-| 1:25–2:00 | Return to 24-row queue; select a finding, switch to its event/history view, inspect normalized fields and original `lantern` evidence | “These twenty-four findings are high or critical and currently unreviewed. The original rule score is retained alongside my explicit severity bands. Severity and analyst disposition are separate: a high-scoring match can later be reviewed as benign. Opening a finding lets me trace the host, file hash, rule, and pattern evidence back to the original Lantern record.” |
-| 2:00–2:30 | Copy a host ID or hash and run its exact related-evidence filter; show multiple findings | “I can pivot using this host, collection, or hash to retrieve related findings. These are existing matches, not newly run detection rules. I preserve individual finding identities because a shared hash or multiple matches does not by itself prove several compromised machines.” |
-| 2:30–3:05 | Run repeat-send command; show 193 previously accepted, zero HTTP attempts; briefly show separate synthetic lifecycle proof if time permits | “This export was imported earlier. Repeating it now sends zero new requests because the local ledger remembers accepted versions. A changed analyst disposition creates a new version. Searches order those reviews using disposition time while retaining the original detection time. Lost responses remain explicitly uncertain; I do not claim exactly-once storage.” |
-| 3:05–3:40 | Show tests summary and return to queue | “I verified both the importer and real Splunk results, including the exact finding identities, repeat imports, and review updates. The implementation includes tests for malformed data, conflicting revisions, delivery failures, and certificate verification. For a customer pilot, my next steps would be to agree the severity and source contracts with analysts, add a real Lantern API and incremental retrieval, and strengthen operational delivery and correction workflows.” |
+| 0:00–0:20 | Show the isolated demo queue with All time selected, then its source-wide stored-event count of zero. | “This prototype brings Lantern findings into Splunk, where analysts already investigate. We start with an empty demo source, isolated from earlier tests. The next steps show a real first import rather than previously loaded results.” |
+| 0:20–0:50 | Run the dry run below. Hold the summary, then rerun the empty demo queue search. | “The operator supplies a JSON export to our Python importer. First, I run a dry run. It validates and maps the file without sending anything. There are two hundred rows: one hundred ninety-three eligible findings, including thirty-three with warnings, and seven quarantined rows. Returning to Splunk, the demo source is still empty.” |
+| 0:50–1:15 | Read the generated validation report. Point to one identity-conflict quarantine reason and one pattern-offset warning. | “The quality report explains those decisions. Quarantine preserves the original record and its rejection reason outside the findings dataset. Usable findings with questionable evidence remain eligible with warnings. Here, conflicting identities are withheld, while an inconsistent pattern offset is preserved and flagged rather than silently repaired.” |
+| 1:15–1:45 | Run the first live send. Show its actual acceptance summary, then independently verify 193 stored events and 24 queue findings in the same source. | “Now I send the eligible findings over verified HTTPS to Splunk’s HTTP Event Collector. The local ledger records which versions were accepted. All one hundred ninety-three are accepted. I refresh Splunk to verify indexing: those events are now searchable, and the queue shows twenty-four high or critical findings that are currently unreviewed.” |
+| 1:45–2:15 | Search one finding from the queue. Show mapped fields, then expand its original lantern object and paired pattern ID/offset. | “Now I inspect one imported finding. Its mapped fields show the score, host, rule, file path, and hash. The original Lantern record is preserved, including paired pattern IDs and offsets. Severity and analyst disposition remain separate, so a high-scoring match can still be benign.” |
+| 2:15–2:40 | Use that finding’s exact host ID in a related-evidence search. Show the eight matching findings. | “Searching this host identifier returns eight related findings. These are existing Lantern matches, not detection rules being run again. Keeping each finding distinct helps the analyst investigate the wider context without losing the original evidence.” |
+| 2:40–3:05 | Repeat the import using the same ledger. Show 193 previously accepted and zero HTTP attempts, then unchanged Splunk counts. | “I repeat the same import using the same ledger. It reports one hundred ninety-three previously accepted versions and zero HTTP requests. Splunk’s count stays unchanged. This avoids resending unchanged findings while allowing later disposition versions. Lost responses remain explicitly uncertain: this prototype does not claim exactly-once storage.” |
+| 3:05–3:40 | Run the automated tests and show the completed result. Return to the populated queue for the closing proposal. | “All two hundred seventy-nine automated tests pass. I also verified the real indexed identities, quarantine exclusions, repeat imports, and review ordering in Splunk. For a customer pilot, I would agree severity bands and source contracts with analysts, connect to Lantern’s API for incremental retrieval, and strengthen delivery monitoring and correction workflows.” |
 
-The live-index/replay/lifecycle checks are marked passed in `TEST_CASES.txt`; keep their verification evidence with the private project records. Cut a detailed lifecycle demonstration before rushing the central analyst journey; keep its tested behavior in the narration and interview notes.
+## Terminal commands by phase
 
-## Recording and review
+These are direct commands, not a scripted helper. Run them in order in the same activated environment. Exit code 2 is expected for this supplied file: it means completion with quality issues. Preserve unexpected output and resolve it before narrating success.
 
-Use a 1920×1080 capture if legible; increase terminal/browser text size before starting. The prepared OBS “Volexity Reference” profile/scene collection records only the Chrome window and is silent. The silent reference covers the Splunk analyst portion. For the final narrated take, add dedicated terminal/report window captures or a suitably cropped display capture so the operator steps are recorded too. Add an Audio Input Capture for your microphone, verify its meter responds, and play back a short audio test before recording the full take. Target 3:40 and remain under four minutes. Rehearse once for navigation and once with a timer. Record a complete take, then play back the exported file to check readable fields, clear audio, correct duration, and absence of credentials or unrelated personal information.
+### Phase 2 — preview
 
-The user selected OBS screen recording. A silent reference capture demonstrates the tested workflow; the final submission still needs the user’s rehearsed narration. Keep those two artifacts distinct, and do not label an unreviewed reference recording as a finished submission.
+```sh
+clear
+lantern-splunk send \
+  --input input/events.json \
+  --config local.toml \
+  --dry-run \
+  --output output/demo-preview
+```
+
+Expected: 200 rows; 193 eligible, including 33 with warnings; seven quarantined; no network or ledger changes. Rerun the Splunk search: the demo source remains empty.
+
+### Phase 3 — quality report
+
+```sh
+clear
+sed -n '1,12p' output/demo-preview/validation-report.txt
+sed -n '/immutable_id_conflict/p' output/demo-preview/validation-report.txt | head -n 1
+sed -n '/pattern_offset_out_of_bounds/p' output/demo-preview/validation-report.txt | head -n 1
+```
+
+This is an operator report produced by the importer, not a Splunk dashboard. Show the actual reasons, without modifying the original evidence.
+
+### Phase 4 — first live import
+
+```sh
+clear
+lantern-splunk send \
+  --input input/events.json \
+  --config local.toml \
+  --state output/demo-delivery.sqlite \
+  --output output/demo-import
+```
+
+Expected: 193 HEC accepted, zero previously accepted, no rejected/uncertain/not-attempted records. Without retries, this uses 193 HTTP attempts. Independently rerun the source-wide count search and wait for indexing: expect 193 stored events. Rerun the source-scoped current queue: expect 24 high/critical UNREVIEWED findings. HEC acceptance alone does not establish indexing.
+
+### Phase 7 — replay with the same ledger
+
+```sh
+clear
+lantern-splunk send \
+  --input input/events.json \
+  --config local.toml \
+  --state output/demo-delivery.sqlite \
+  --output output/demo-replay
+```
+
+Expected: 193 previously accepted, zero new HEC acceptances, zero HTTP attempts, and unchanged Splunk counts. Only the report output directory changes; input, destination, and ledger remain the same.
+
+### Phase 8 — tests
+
+```sh
+clear
+python -m pytest -q
+```
+
+Expected: 279 passed. Use the actual result from the recorded run. These are automated importer tests; the independent live Splunk checks establish indexing, query behavior, and review ordering separately.
+
+## Browser actions and continuity
+
+Use the prepared source-scoped searches: queue, total count, selected finding, and exact host. Search templates are in `splunk/searches/`; replace the source filter consistently with the dedicated demo source. Rerun searches using Splunk's search/reload control after ingestion, since a browser refresh can reuse an old job.
+
+For inspection, select Events and expand the nested `lantern` object using its JSON expansion controls. Show the mapped values and original file/rule/pattern evidence. For the host pivot, filter using the selected finding's exact host ID and select Statistics. Do not imply a special recommendation button or new detection-rule execution.
+
+The eight blocks total 220 seconds. Detailed shared-hash and synthetic lifecycle demonstrations are omitted from this short movie; their completed checks remain in `TEST_CASES.txt` and the private verification records. Existing populated-source footage must not be relabeled as the new source filling.
+
+## Final narration and review
+
+Edit the real silent clips to the eight boundaries above, with no extra title/countdown extending the 3:40 duration. Play the completed silent movie in OBS alongside webcam capture and microphone narration. Rehearse twice, check readable fields and synchronized narration, and play back the final exported file before handoff. The final narrated video, Drive delivery/access verification, and post-delivery trial cleanup remain outstanding.
