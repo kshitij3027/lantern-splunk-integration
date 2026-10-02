@@ -1,0 +1,23 @@
+[build-system]
+requires = ["setuptools>=75"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "lantern-splunk-integration"
+version = "0.1.0"
+description = "Validate and map forensic findings for Splunk HTTP Event Collector"
+requires-python = ">=3.11"
+dependencies = ["urllib3==2.8.0"]
+
+[project.optional-dependencies]
+test = ["pytest==9.0.2"]
+
+[project.scripts]
+lantern-splunk = "lantern_splunk.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-ra"
