@@ -1,0 +1,788 @@
+LANTERN TO SPLUNK PROTOTYPE — TEST CASES AND VERIFICATION RECORD
+Version: 0.1.0
+Recorded: October 1, 2026, 9:56 PM America/Los_Angeles
+Status: AUTOMATED SUITE PASSED; LIVE SEARCH/RELEASE GATES STILL OPEN
+
+1. WHAT WAS ACTUALLY RUN
+
+Command: .venv/bin/python -m pytest -q
+Observed result: 279 passed in 2.57 seconds; zero failures or skips.
+Collection check: 279 parameterized cases across 97 test functions.
+Environment: Python 3.14.2; macOS 26.6.2 on ARM64; pytest 9.0.2;
+urllib3 2.8.0. Real TLS fixtures used the OpenSSL 3.6.0 command.
+Code checkpoint: 7bff801.
+
+The project lead also verified a successful GitHub Actions workflow against
+Python 3.11 and Python 3.14 on Ubuntu for this checkpoint:
+https://github.com/kshitij3027/lantern-splunk-integration/actions/runs/36966439698
+The local duration above is the observed macOS run, not a CI duration.
+
+Module                         Cases   Test functions
+  tests/test_cli.py                19       9
+  tests/test_config.py             11       6
+  tests/test_delivery.py           13      11
+  tests/test_mapping.py            32      12
+  tests/test_state.py              14      11
+  tests/test_transport.py          55      13
+  tests/test_validation.py        135      35
+  TOTAL                          279      97
+
+Of the 279 cases, four use an actual temporary HTTPS receiver on loopback.
+The others test parsing, validation, mapping, configuration, CLI/report files,
+SQLite, locking, and controlled transport behavior. One lock test launches a
+separate Python process. Tests use synthetic records and dummy credentials;
+the assessment export and a running Splunk instance are not prerequisites.
+
+The four real TLS tests generate short-lived certificates and keys in a test
+temporary directory. Nothing is copied from the real Splunk installation.
+If openssl is unavailable on another machine, those four tests explicitly
+skip; a skipped result must not be reported as proof of TLS behavior there.
+
+PASS below means the assertions passed in the recorded run. The tests do not
+prove production throughput, all supported Python versions, Windows support,
+exactly-once indexing, or a live Lantern API integration. Live Splunk acceptance
+and searchable indexing are separate checks in section 9.
+
+2. DOCUMENT READING, CLI, REPORTS, AND CONFIGURATION
+
+C01 — Validate without a destination or network
+Purpose: Make the offline path useful and preserve the supplied input.
+Setup/input: One complete synthetic finding; replace the HEC constructor with
+an immediate failure if called; capture the source bytes before validation.
+Expected: Exit 0; one eligible record; original bytes unchanged; report checksum
+matches the original bytes; readable terminal summary; no HEC construction.
+Actual: PASS.
+Reference: tests/test_cli.py::test_validate_retains_source_and_needs_no_network
+
+C02 — Dry run of a mixed-quality file
+Purpose: Demonstrate preview and quarantine without credentials or side effects.
+Setup/input: One clean finding, one string-size finding, and one missing-host
+finding; unset the token; provide a nonexistent ledger path; forbid HEC calls.
+Expected: Exit 2 for quality issues; two mapped events; original string retained;
+one exact rejected record in quarantine; no ledger created; run marked completed
+with quality issues, not an operational failure.
+Actual: PASS.
+Reference: tests/test_cli.py::test_dry_run_reports_warnings_and_quarantine_without_token_or_ledger
+
+C03 — Fatal input errors never reach the sender
+Purpose: Prevent partial ingestion of an invalid document.
+Input family: Truncated JSON, wrong top-level object, duplicate object keys,
+NaN, Infinity, and a BOM followed by invalid JSON.
+Expected: Exit 1; operational-failure run report; no preview and no HEC call.
+Actual: PASS for all six parameter cases.
+Reference: tests/test_cli.py::test_bad_documents_fail_before_network
+
+C04 — Protect input, credentials, and trust material from report writes
+Purpose: Prevent an output-directory mistake from destroying required files.
+Setup/input: Source named validation-report.json; separately configure token_file
+or ca_file to collide with run-report.json, validation-report.json, or
+mapped-events.jsonl in the chosen output directory.
+Expected: Exit 1 before overwriting protected content; original content remains.
+Actual: PASS for the source collision and all six token/CA collision combinations.
+References: tests/test_cli.py::test_reports_cannot_overwrite_input;
+  test_report_paths_cannot_overwrite_configured_secret_or_trust
+
+C05 — Live CLI prerequisites and delivery/replay reporting
+Purpose: Require an intentional live destination and preserve acceptance state.
+Setup/input: First omit config and state. Then provide a synthetic config/token,
+real SQLite ledger, one finding, and a controlled accepting HEC client; run twice.
+Expected: Missing prerequisites exit 1. First configured run exits 0 and records
+one acceptance. Second exits 0, performs zero requests, and reports one previously
+accepted version. No output artifact contains the synthetic token.
+Actual: PASS.
+References: tests/test_cli.py::test_live_send_requires_explicit_destination_and_state;
+  test_live_send_and_replay_use_real_ledger
+
+C06 — Authentication failure is visible and stops remaining delivery
+Purpose: Avoid a misleading successful CLI exit or attempts on the entire file.
+Setup/input: Two findings and a controlled client returning authentication failure.
+Expected: Exit 1; one rejected record, one not attempted, one request attempt;
+structured delivery report retained.
+Actual: PASS.
+Reference: tests/test_cli.py::test_auth_failure_has_delivery_report_and_operational_exit
+
+C07 — Generated reports have private filesystem permissions
+Purpose: Keep evidence-bearing reports owner-readable/writable only.
+Setup/input: Run offline validation in a temporary directory.
+Expected: Every created report has mode 0600.
+Actual: PASS on the recorded macOS filesystem.
+Reference: tests/test_cli.py::test_reports_are_private_files
+
+C08 — Configuration defaults, paths, and invalid values
+Purpose: Make offline use simple while rejecting ambiguous live configuration.
+Setup/input: No config; then a config with relative token/CA paths. Invalid family:
+wrong top-level layout, unknown timeout key, boolean attempts, negative timeout,
+numeric source, and empty index.
+Expected: Defaults load without credentials; relative paths resolve against the
+config's directory; all invalid examples raise explicit ConfigError.
+Actual: PASS, including all six invalid-configuration parameters.
+References: tests/test_config.py::test_default_config_does_not_need_credentials;
+  test_relative_paths_are_based_on_config_file; test_invalid_configuration_is_explicit
+
+C09 — Secret loading, precedence, and token-file access
+Purpose: Keep credentials out of errors and enforce the documented token-file mode.
+Setup/input: Both environment token and owner-only file; invalid whitespace token;
+missing token file; token file with modes 0644 and then 0600.
+Expected: Environment value wins; invalid/missing cases fail without revealing
+secret content or sensitive filename; 0644 rejected; 0600 accepted.
+Actual: PASS.
+References: tests/test_config.py::test_environment_wins_and_missing_token_error_never_echoes_secret;
+  test_missing_token_file_does_not_echo_path; test_token_file_requires_private_permissions
+
+3. VALIDATION AND SNAPSHOT QUALITY
+
+V01 — Reconcile every source position
+Purpose: Account for usable, rejected, duplicate, and empty input without data loss.
+Input: A valid record; an empty array; non-object rows (null, array, string, integer,
+boolean) followed by a valid record.
+Expected: Clean/empty summaries reconcile; each non-object row is preserved and
+quarantined while the valid neighbor remains eligible; one-based row positions
+and source checksum remain available in the serializable report.
+Actual: PASS.
+References: tests/test_validation.py::test_clean_record_and_empty_snapshot_reconcile;
+  test_non_object_row_is_accounted_for_without_blocking_other_rows
+
+V02 — Reject invalid documents before row processing
+Purpose: Avoid treating arbitrary Python values as an acceptable JSON export.
+Input families: Top-level object/null/string/number/boolean; NaN, infinity, set,
+and an unpaired Unicode surrogate inside otherwise record-shaped data.
+Expected: DocumentError for every case, before any eligible-row processing.
+Actual: PASS for nine parameter cases.
+References: tests/test_validation.py::test_wrong_document_shape_is_fatal;
+  test_non_json_or_non_utf8_values_fail_document_before_rows
+
+V03 — Require finding identity and minimum analyst context
+Purpose: Avoid importing a finding without a meaningful identity or evidence.
+Input family: Null, blank, integer, and array in each of seven required strings:
+event ID, stable host ID, hostname, rule name, file path, collection ID, disposition
+status. Five required object fields are also replaced with arrays. Event type is
+changed to an unsupported process-start category.
+Expected: All malformed minimum-context records quarantined with reason codes;
+unsupported event type rejected rather than guessed.
+Actual: PASS, including 28 required-string combinations and five object cases.
+References: tests/test_validation.py::test_missing_minimum_identity_or_evidence_is_quarantined;
+  test_required_objects_cannot_be_missing_or_arrays; test_unknown_event_type_is_not_guessed
+
+V04 — Numeric severity and file-size policy
+Purpose: Prevent silent rounding, truth-value conversion, or unit guessing.
+Input families: Severity -1/101, booleans, float, numeric string, null. Size negative
+integer, boolean, float, signed/whitespace/decimal/exponent/unit/non-ASCII-digit
+strings, null. Allowed size examples: 0, 100, "0", "00100".
+Expected: Invalid values quarantined. Lossless ASCII digit strings become a
+normalized integer with a coercion warning; raw source value and input remain
+unchanged. Numeric valid values do not gain the coercion warning.
+Actual: PASS for seven severity, eleven invalid-size, and four valid-size cases.
+References: tests/test_validation.py::test_severity_rejects_outside_range_bool_or_coercion;
+  test_invalid_size_does_not_get_rounded_or_guessed;
+  test_lossless_size_conversion_preserves_source
+
+V05 — Hash validity
+Purpose: Make hash pivots meaningful without inventing a hash value.
+Input family: Null; 63/65 characters; invalid hex; prefixed rather than plain hash.
+Expected: Every malformed SHA-256 quarantined with invalid_sha256.
+Actual: PASS for all five cases.
+Reference: tests/test_validation.py::test_invalid_hash_is_quarantined
+
+V06 — Timestamp parsing and source chronology
+Purpose: Preserve actual detection time and enforce the source's time contract.
+Input: Missing, date-only, timezone-naive, impossible date/hour/offset timestamps;
+equivalent UTC offsets; fractional seconds; file modification equal to or after
+match; collection completion before or exactly equal to match.
+Expected: Invalid timestamps quarantine; offsets resolve to the same UTC instant;
+fractional precision retained; modification must precede match; match may equal
+collection completion but may not occur after it.
+Actual: PASS across all parsing, ordering, and equality cases.
+References: tests/test_validation.py::test_invalid_or_naive_timestamps_are_quarantined;
+  test_offsets_and_fractional_seconds_are_converted_to_utc;
+  test_source_time_order_is_enforced; test_match_can_equal_collection_completion
+
+V06a — Timestamp precision does not silently collapse evidence
+Purpose: Prevent Python datetime's precision limit from merging distinct revisions
+or turning two ordered source instants into the same timestamp.
+Input: Zero through six fractional digits; 7, 9, or 18 digits in detection,
+modification, collection completion, and disposition update fields; two distinct
+submicrosecond instants; two valid revisions separated by one microsecond.
+Expected: Supported precision preserved. All twelve excessive-precision/field
+combinations quarantine with an explicit never-rounded explanation and preserved
+source. Unsupported submicrosecond values are not normalized or collapsed into a
+false chronology error. Supported adjacent microsecond revisions remain distinct.
+Actual: PASS for seven supported precision cases, twelve excessive-precision
+combinations, one submicrosecond ordering case, and one revision distinction case.
+References: tests/test_validation.py::test_supported_timestamp_precision_is_preserved;
+  test_excess_timestamp_precision_is_explicitly_quarantined_in_every_time_field;
+  test_submicrosecond_time_order_is_not_silently_collapsed;
+  test_microsecond_disposition_revisions_remain_distinct
+
+V07 — Pattern evidence: structural errors versus warnings
+Purpose: Keep pattern/offset evidence paired and distinguish unusable structure
+from incomplete but still identifiable findings.
+Input: Null patterns; non-object entries; negative/boolean/float offsets; empty
+pattern ID; empty array; offsets at and beyond reported file size.
+Expected: Structural defects quarantine. Empty and out-of-bounds patterns retain
+the finding with warnings; raw entries survive; multiple offending offsets get
+individual issues without duplicating the normalized quality flag.
+Actual: PASS.
+References: tests/test_validation.py::test_malformed_patterns_quarantine;
+  test_empty_and_out_of_bounds_patterns_warn_without_deleting_evidence
+
+V08 — Disposition lifecycle validity and unfamiliar values
+Purpose: Avoid fabricating analyst decisions or revision order.
+Input: UNREVIEWED with non-null or missing analyst/comment/update fields; BENIGN,
+MALICIOUS, SUPPRESSED with valid, missing, or pre-match dates; unknown TRIAGED
+status with and without a dated revision.
+Expected: UNREVIEWED requires explicit null lifecycle fields. Known reviewed
+statuses require a valid revision date at or after match. Unknown nonempty status
+is preserved with a warning and never reinterpreted as a known status.
+Actual: PASS.
+References: tests/test_validation.py::test_unreviewed_has_explicit_null_lifecycle_fields;
+  test_reviewed_requires_a_valid_revision_date_not_before_match;
+  test_unknown_disposition_is_preserved_and_flagged_without_guessing
+
+V09 — Optional context and forward-compatible evidence preservation
+Purpose: Do not discard identifiable findings merely because optional context is
+malformed, or discard a future field the importer does not understand.
+Input: Invalid OS/IP/rule version/file owner plus a new nested extension field;
+separate input mutated by the test after validation.
+Expected: Optional errors warn; unknown extensions and nulls remain intact;
+validation does not modify its input and retains an independent original copy.
+Actual: PASS.
+References: tests/test_validation.py::test_optional_bad_context_warns_but_unknown_new_fields_are_preserved;
+  test_validation_does_not_mutate_input_and_retains_independent_original
+
+V10 — Exact duplicates and conflicting immutable identities
+Purpose: Handle a complete snapshot before sending arbitrary winners.
+Input: Identical record with reordered JSON keys; repeated ID with changed file
+path plus an exact copy; reverse the input order; include an unrelated finding.
+Expected: Exact duplicate points to the retained source row and counts reconcile.
+Every member of an immutable-ID conflict is quarantined, including identical
+copies in that group, regardless of order; unrelated finding remains eligible.
+Actual: PASS.
+References: tests/test_validation.py::test_exact_duplicate_rows_have_one_retained_version_and_reconcile;
+  test_all_immutable_conflict_members_quarantine_including_exact_copies
+
+V11 — Revision history and tied-revision ambiguity
+Purpose: Permit history without choosing a conflicting analyst decision by order.
+Input: Baseline, newer review, and older dated review of the same immutable finding;
+then differing dispositions at the exact same revision time, including a duplicate.
+Expected: Legitimate versions coexist with one immutable fingerprint and distinct
+version hashes; baseline ranks below dated reviews. All conflicting tied rows
+quarantine, while a non-conflicting baseline remains independently eligible.
+Actual: PASS.
+References: tests/test_validation.py::test_newer_and_stale_disposition_versions_coexist_as_history;
+  test_tied_differing_revisions_quarantine_all_ties_without_hiding_baseline
+
+V12 — Cross-record collection and hash consistency
+Purpose: Detect contradictions across a file, not just malformed individual rows.
+Input: Same collection ID with different completion times; equivalent completion
+instants expressed in different offsets; same hash with differing file sizes and
+hash letter case; equivalent integer/string sizes.
+Expected: Every conflicting collection member quarantines; unrelated collection
+remains valid. Equivalent times do not conflict. All findings sharing a hash/size
+contradiction receive warnings without being merged; equal normalized sizes do
+not cause a false conflict.
+Actual: PASS.
+References: tests/test_validation.py::test_shared_collection_conflict_marks_entire_group_not_just_outlier;
+  test_equivalent_collection_instants_with_different_offsets_are_consistent;
+  test_hash_size_conflict_warns_all_rows_and_does_not_merge_findings;
+  test_hash_size_uses_normalized_numeric_value_without_false_conflict
+
+V13 — Stable identity independent of file position
+Purpose: Make replay tracking survive a reordered or repackaged export.
+Input: Identical source finding moved to a different row, under a different source
+file checksum and different JSON key order.
+Expected: Event version and immutable fingerprint unchanged; row provenance differs.
+Actual: PASS.
+Reference: tests/test_validation.py::test_fingerprints_do_not_change_with_row_position_file_hash_or_key_order
+
+4. MAPPING SEMANTICS
+
+M01 — Explicit severity policy boundaries
+Input: 0/19, 20/39, 40/69, 70/89, 90/100, plus direct invalid calls with booleans,
+out-of-range values, a float, and a numeric string.
+Purpose/expected: Each pair maps to informational/low/medium/high/critical while
+preserving the numeric source score; invalid direct inputs raise ValueError.
+Actual: PASS for ten boundaries and six invalid-input cases.
+References: tests/test_mapping.py::test_severity_policy_boundaries;
+  test_mapper_rejects_invalid_severity_even_when_called_directly
+
+M02 — HEC envelope identifies the correct time, host, and destination
+Input: Valid finding with a UTC-offset timestamp and custom index/source/sourcetype.
+Purpose/expected: Envelope time is detection epoch, not import time; host and dest
+identify the affected endpoint; configured scope is retained; nested evidence is
+inside event, not incorrectly placed in HEC's flat fields object.
+Actual: PASS.
+Reference: tests/test_mapping.py::test_envelope_uses_detection_time_and_affected_host
+
+M03 — File names use the source operating system
+Input: Windows drive and UNC paths; Linux/macOS paths; literal backslash in a POSIX
+filename; unfamiliar, array, and null OS values.
+Purpose/expected: Known OS path rules derive the right basename independent of
+importer OS. Unknown/malformed OS preserves raw context, warns, and leaves filename
+null rather than inventing an interpretation.
+Actual: PASS for five known-path and three unknown/malformed-OS cases.
+References: tests/test_mapping.py::test_filename_follows_source_os_not_importer_os;
+  test_unknown_or_malformed_optional_os_does_not_invent_filename
+
+M04 — Normalization does not erase evidence
+Input: Multiple pattern IDs/offsets; nulls; future nested fields; zero-padded string
+size; uppercase hash; invalid optional IP/version/owner values.
+Purpose/expected: Original Lantern record survives independently. Only normalized
+size/hash are converted; conversions have reason flags. Invalid optional fields
+are not promoted to valid normalized meaning. Changing the mapped copy does not
+change the input source.
+Actual: PASS.
+References: tests/test_mapping.py::test_nulls_unknown_fields_and_pattern_pairing_survive_mapping;
+  test_coercion_changes_only_normalized_size_and_reports_its_reason;
+  test_invalid_optional_fields_are_not_promoted_to_normalized_meaning
+
+M05 — Severity is distinct from judgment and action
+Input: Critical-score finding reviewed BENIGN, with a comment mentioning isolation.
+Purpose/expected: Critical severity and BENIGN judgment coexist; file owner,
+requestor, and analyst remain separate. No blocked/action/attacker/ATT&CK/unique
+rule-ID claim is invented from the record.
+Actual: PASS.
+Reference: tests/test_mapping.py::test_rule_severity_and_disposition_are_distinct_without_inventing_actions
+
+M06 — Revision ordering, provenance, and mapping eligibility
+Input: Baseline and dated review with identical detection time; repeat mapping;
+quarantined and duplicate rows passed directly to the mapper.
+Purpose/expected: Rank/revision time can select the newer complete finding without
+changing detection time. Source row/checksum, mapping version, stable version hash,
+and immutable fingerprint are explicit and deterministic. Noneligible rows refuse
+mapping instead of being silently sent.
+Actual: PASS.
+References: tests/test_mapping.py::test_revision_order_is_independent_of_unchanged_detection_time;
+  test_provenance_and_versions_are_explicit_and_repeatable;
+  test_mapper_refuses_quarantined_and_duplicate_rows
+
+5. HTTPS TRANSPORT AND CONTROLLED FAILURE CLASSIFICATION
+
+T01 — Construct exactly one verified request
+Input: Synthetic envelope, dummy token, controlled connection pool.
+Purpose/expected: HTTPS POST uses the configured path, JSON body, authorization,
+5-second connect/15-second response defaults; automatic library retries and
+redirects disabled; required certificate validation remains enabled; ordinary
+remote Common Name fallback disabled; context manager closes pool; no token in result.
+Actual: PASS.
+Reference: tests/test_transport.py::test_request_checks_tls_disables_library_retries_and_redirects
+
+T02 — Reject unsafe configuration before requesting
+Input: HTTP URL; URL credentials/query/fragment; missing host; invalid/zero port;
+timeouts zero/negative/NaN/infinite/bool/string; tokens empty, newline-containing,
+NUL-containing, non-ASCII, or null; TLS name override on remote host or without CA.
+Purpose/expected: Safe configuration error before network. Local name override
+requires literal loopback and explicit trust, retains CERT_REQUIRED, and checks
+the exact configured name. Invalid token content is not copied into error text.
+Actual: PASS across all parameter families.
+References: tests/test_transport.py::test_unsafe_endpoints_rejected;
+  test_name_override_only_loopback_explicit_ca; test_invalid_timeouts_rejected;
+  test_invalid_header_token_has_safe_error
+
+T03 — HTTP success alone is not HEC acceptance
+Input family: HTTP 200/201 with integer code 0; HEC errors; boolean/string codes;
+empty/malformed/non-UTF-8 body; empty object/array; 204; redirect; 401/403/404;
+429; 500/503 with internal-error, incorrect-index, invalid-token, or malformed body.
+Purpose/expected: Accepted only for HTTP 2xx plus valid integer code 0. Redirects
+and permanent auth/index failures reject. Rate limiting/busy responses retry.
+Internal ingestion error (code 8) and unproven server failures remain uncertain;
+a contradictory server status does not hide an explicit token/index rejection.
+Actual: PASS for all 22 response combinations.
+Reference: tests/test_transport.py::test_http_and_hec_must_both_succeed
+
+T04 — Distinguish pre-send failure from uncertain delivery
+Input family: Connect timeout/new-connection failure; response timeout/disconnect;
+certificate trust/name failures; other TLS failure, with deliberately sensitive
+text inside the exception used by the test.
+Purpose/expected: Known pre-send failures can retry without claiming acceptance;
+response loss is uncertain; certificate failures reject; other TLS failures stop
+with uncertainty. Raw exception details and dummy secret text are not emitted.
+Actual: PASS for all seven exception cases.
+Reference: tests/test_transport.py::test_transport_failure_classification_does_not_expose_exception
+
+T05 — Bound delays and reject non-finite JSON
+Input: Retry-After 1000, -2, 2, infinity, invalid text, and an old HTTP date; NaN in
+an outgoing envelope.
+Purpose/expected: Delay bounded to 0–5 seconds; invalid/nonfinite values ignored;
+nonfinite envelope rejected without a request.
+Actual: PASS.
+References: tests/test_transport.py::test_retry_after_is_bounded_and_bad_values_ignored;
+  test_nonfinite_json_never_sent
+
+T06 — Real loopback HTTPS with trusted and untrusted CAs
+Setup: Temporary HTTPS receiver, generated SAN certificate, and unrelated test CA.
+Expected: Trusted request succeeds and receiver sees exact path/envelope/dummy
+authorization. Wrong CA fails verification and sends no additional HTTP request.
+Actual: PASS against actual sockets and Python/urllib3 TLS, not a mocked pool.
+Reference: tests/test_transport.py::test_real_https_receiver_accepts_only_trusted_certificate
+
+T07 — Real name checking and explicit legacy local compatibility
+Setup: Real receiver with SAN certificate but wrong expected name; then a separate
+CN-only certificate without the expected IP identity.
+Expected: Wrong name rejects before HTTP. Ordinary CN-only/IP use rejects. Explicit
+loopback profile with trusted CA and exact legacy name succeeds while preserving
+certificate validation.
+Actual: PASS in both real TLS test functions.
+References: tests/test_transport.py::test_real_https_receiver_rejects_wrong_expected_name;
+  test_real_cn_only_certificate_requires_explicit_local_profile
+
+T08 — Real HTTP 200 with a HEC rejection
+Setup: Real trusted HTTPS receiver returns HTTP 200 with HEC code 7.
+Expected: One request received; client classifies it rejected, never accepted.
+Actual: PASS.
+Reference: tests/test_transport.py::test_real_hec_receiver_http_success_with_error_is_not_accepted
+
+6. SQLITE IDENTITY, ACCEPTANCE, AND PROCESS LOCKING
+
+S01 — Acceptance survives reopening and is destination-specific
+Setup: Accept a synthetic version, close/reopen ledger, then vary index, source,
+sourcetype, mapping version, instance ID, and endpoint independently.
+Purpose/expected: Original scope skips the accepted version. Every new delivery
+scope remains eligible for its own delivery. Token is absent from scope identity;
+uppercase hostname and explicit default port normalize consistently.
+Actual: PASS.
+References: tests/test_state.py::test_acceptance_persists_and_skip_is_scope_specific;
+  test_scope_does_not_include_token_and_normalizes_default_port
+
+S02 — Immutable conflicts include unresolved previous attempts
+Input: Same finding ID with changed immutable fingerprint after accepted,
+uncertain, or still-pending state; repeat across a mapping-version change.
+Purpose/expected: Incoming conflict reported in all cases. Mapping changes cannot
+hide a source identity conflict. Explicitly rejected attempts alone do not reserve
+an identity forever or block a later corrected input.
+Actual: PASS.
+References: tests/test_state.py::test_known_or_uncertain_identity_blocks_changed_immutable;
+  test_explicit_rejection_does_not_reserve_finding_identity;
+  test_conflict_checks_survive_mapping_version_changes
+
+S03 — Revision conflict versus legitimate history
+Input: Accepted or uncertain dated MALICIOUS revision; competing BENIGN revision
+at the same instant; older baseline and a later BENIGN revision.
+Purpose/expected: Tied differing disposition conflicts. Valid missing older history
+and later revision are allowed; ordering is not based on arrival sequence.
+Actual: PASS for accepted and uncertain anchors.
+Reference: tests/test_state.py::test_tied_disposition_conflict_but_older_history_allowed
+
+S04 — Interrupted pending request recovers conservatively
+Setup: Commit pending attempt, close without a result, reopen, then accept a retry.
+Purpose/expected: Recovered attempt becomes uncertain. Same version is sendable
+with possible-duplicate indication. Later acceptance permits skipping while the
+historical uncertainty remains visible.
+Actual: PASS.
+Reference: tests/test_state.py::test_interrupted_pending_is_uncertain_on_recovery
+
+S05 — Refuse concurrent ledger use
+Setup: Open same ledger twice through distinct file handles; repeat from a separate
+Python subprocess; close the owner and try again.
+Purpose/expected: Contending open raises StateLocked, including in a different
+process; lock is released after close and the ledger can be reopened.
+Actual: PASS in both same-process and cross-process cases.
+References: tests/test_state.py::test_concurrent_ledger_user_refused_and_released_after_close;
+  test_other_process_cannot_open_active_ledger
+
+S06 — Scope and pending-attempt integrity
+Input: Envelope whose source differs from configured scope; nonexistent attempt ID
+passed to acceptance finalization.
+Purpose/expected: Wrong scope cannot create a pending attempt; nonexistent pending
+attempt cannot be manufactured into an acceptance.
+Actual: PASS.
+References: tests/test_state.py::test_wrong_scope_cannot_record_attempt;
+  test_missing_attempt_cannot_be_falsely_accepted
+
+7. DELIVERY SEQUENCING, RETRIES, AND CRASH WINDOWS
+
+D01 — Successful import, exact replay, and durable-before-send ordering
+Setup: Three synthetic versions accepted; reopen ledger and replay. Separate
+controlled client reads SQLite during its send method.
+Purpose/expected: First run accepts three in three attempts; rerun makes zero
+requests and counts three previously accepted. Every HTTP call sees an already
+committed pending attempt. Outcome counts reconcile to input candidates.
+Actual: PASS.
+References: tests/test_delivery.py::test_success_then_replay_sends_zero_and_reconciles_counts;
+  test_pending_is_durable_before_request
+
+D02 — Explicit transient rejection versus uncertain retry
+Setup: Rate limit then success with exaggerated Retry-After; response loss then
+success; recovered uncertain attempt then immediate successful retry.
+Purpose/expected: Retry delay capped at five seconds. Definite rate rejection does
+not itself imply a duplicate. Response loss/recovered uncertainty retains a
+possible-duplicate indication even after success; individual attempt history
+records the actual rejected/uncertain/accepted sequence.
+Actual: PASS.
+References: tests/test_delivery.py::test_explicit_retry_bounded_and_no_duplicate_warning;
+  test_unknown_retry_success_retains_possible_duplicate;
+  test_recovered_uncertain_version_warns_even_if_first_retry_succeeds
+
+D03 — Stop promptly and account for remaining records
+Setup: Two candidates; permanent rejection, repeated rate limits, or repeated
+uncertainty on the first candidate.
+Purpose/expected: Permanent error stops after one attempt; retryable failure stops
+after three attempts. Remaining record is not attempted. Exhausted uncertainty
+is reported uncertain; definite rejection remains rejected. Run marked stopped.
+Actual: PASS for all three result/attempt/status parameters.
+Reference: tests/test_delivery.py::test_failure_stops_remaining_records
+
+D04 — A later rejection cannot erase an earlier uncertain attempt
+Setup: First request loses its response; retry receives permanent rejection.
+Purpose/expected: Overall record remains uncertain because the first copy may
+already have arrived; never recast the record as definitely absent.
+Actual: PASS.
+Reference: tests/test_delivery.py::test_permanent_error_after_uncertain_attempt_stays_uncertain
+
+D05 — Local state failure before or after network
+Setup: Force pending-write failure before send; separately return HEC success but
+force acceptance-write failure, close, and reopen ledger.
+Purpose/expected: Before-send failure sends nothing and records not attempted.
+After-send bookkeeping failure reports uncertain, not durable accepted; pending
+state survives and recovery retains possible-duplicate risk.
+Actual: PASS.
+References: tests/test_delivery.py::test_state_write_failure_before_request_sends_nothing;
+  test_acceptance_write_failure_is_uncertain_and_recovered
+
+D06 — Process interruption during a request
+Setup: Controlled sender raises KeyboardInterrupt after pending is committed.
+Purpose/expected: Interrupt propagates; reopening recovers pending as uncertain.
+Actual: PASS.
+Reference: tests/test_delivery.py::test_keyboard_interrupt_recovers_uncertainty
+
+D07 — Cross-run conflict does not suppress unrelated valid work
+Setup: Previously accepted finding, conflicting immutable replacement, unrelated
+new finding, and one accepting response.
+Purpose/expected: Conflict is rejected without a request; unrelated finding is
+sent and accepted; report identifies both outcomes separately.
+Actual: PASS.
+Reference: tests/test_delivery.py::test_cross_run_conflict_is_reported_without_sending_and_other_ids_continue
+
+8. PRIVATE EXPORT REGRESSION AND LIVE HEC STATUS
+
+These checks are separate from the 279 public automated cases. Their results were
+provided by the project lead during this report's preparation. Source records,
+source-derived identifiers, credentials, and private files are not reproduced here.
+
+P01 — Full provided-export validation
+Expected/observed: 200 rows = 193 eligible + 7 quarantined + 0 exact input duplicates.
+Within eligible: 33 warning rows + 160 without warnings. Expected high/critical
+UNREVIEWED logical work-queue candidates: 24.
+Status: PASS for private offline baseline; live queue equality remains pending.
+Evidence type: Actual importer/private input regression, not synthetic unit tests.
+
+P02 — Actual local Splunk Python TLS smoke
+Expected/observed: Planned Python client connects with explicit local CA/name and
+receives a successful HEC acknowledgement for a synthetic smoke event.
+Status: PASS for transport acceptance.
+Evidence type: Actual local Splunk HTTPS request. This status alone does not prove
+that the event or assessment dataset is searchable.
+
+P03 — Installed CLI sends eligible assessment records
+Expected/observed: 193 eligible records accepted in 193 HTTP attempts; no delivery
+failures reported by the project lead.
+Status: PASS for HEC acceptance; independent indexing reconciliation PENDING.
+Evidence type: Actual installed CLI, actual Splunk HEC, real delivery ledger.
+
+P04 — Wheel installed outside the source checkout
+Expected/observed: Fresh wheel installed outside the checkout; installed CLI ran
+the public synthetic preview successfully, reporting four eligible records and
+one warning row, with exit 2 for quality issues.
+Status: PASS for installed-package offline execution, as verified by project lead.
+The fresh final ZIP extraction and full documented reviewer path remain pending.
+
+P05 — Prepared synthetic lifecycle input
+Expected/observed: Three public lifecycle files prepared and validated offline:
+initial UNREVIEWED, newer BENIGN, and stale MALICIOUS history.
+Status: PASS for fixture preparation/offline validation, as verified by project
+lead. They have NOT been sent to real Splunk yet; no live lifecycle claim is made.
+
+9. LIVE BROWSER, REPRODUCTION, AND RELEASE GATES — PENDING
+
+Do not change these to PASS based solely on HTTP acceptance, unit tests, or total
+counts. Add the actual observation, evidence location, and date after execution.
+
+L01 — Indexed identity/version equality
+Procedure: In the real Splunk browser, constrain index/source/sourcetype and use
+All time; extract event ID and event version; compare the complete returned set
+with the eligible mapped export.
+Expected: Exactly the eligible ID/version set; no missing or unexpected versions.
+Actual/status: PENDING — not yet independently verified in this report.
+
+L02 — Quarantine isolation and synthetic-source isolation
+Procedure: Verify quarantined findings are absent from the assessment dataset;
+exclude setup and synthetic lifecycle sources from assessment searches.
+Expected: No quarantined IDs or setup/lifecycle probes contaminate assessment view.
+Actual/status: PENDING.
+
+L03 — Analyst queue correctness
+Procedure: Execute final current-state search: sort complete rows by revision rank
+and time, deduplicate by finding ID, then filter high/critical UNREVIEWED.
+Expected: 24 assessment findings if the private baseline/policy remains unchanged.
+Actual/status: PENDING.
+
+L04 — Inspect evidence and related findings in browser
+Procedure: Expand one eligible finding; trace normalized values to original Lantern
+object; pivot by host/hash/collection; inspect a warning-bearing finding.
+Expected: Values are understandable, original pattern/offset pairs preserved,
+related searches return matching imported evidence; warnings remain visible.
+Actual/status: PENDING.
+
+L05 — Controlled live replay
+Procedure: Record actual raw assessment count and ID/version set; repeat the same
+fully successful import with the same ledger; repeat the search.
+Expected: CLI sends zero requests, all eligible versions previously accepted;
+physical assessment count and logical set do not grow in this controlled replay.
+Actual/status: PENDING. Automated ledger replay is already covered separately.
+
+L06 — Live disposition lifecycle and stale history
+Procedure: In an isolated synthetic source, import baseline UNREVIEWED followed by
+newer BENIGN and then stale MALICIOUS history; run final queue/history searches.
+Expected: Newer judgment removes the finding from the unreviewed queue; older
+history cannot resurrect it; all legitimate versions remain inspectable.
+Actual/status: PENDING. Unit mapping/validation/state coverage is not a substitute
+for testing the actual saved SPL against the real index.
+
+L07 — Reviewer reproduction from a fresh package
+Procedure: Extract curated ZIP into a fresh directory; create a fresh virtual
+environment; follow README install, test, offline validate, and preview commands.
+Expected: Documented commands succeed without hidden working-tree dependencies;
+all public examples synthetic; live path requires only documented Splunk setup.
+Actual/status: PENDING.
+
+L08 — Release and recording verification
+Procedure: Inspect ZIP contents for source/docs/tests, secret exclusion, absence of
+local ledger/cache/venv/Splunk binaries; verify upload/access; play complete video.
+Expected: Playable and readable end-to-end recording; final narrated submission
+within required 3–4 minutes; intended recipient can access final artifacts.
+Actual/status: PENDING. A future silent reference recording is distinct from the
+user's final narrated assessment submission.
+
+10. HOW TO REPEAT OR EXTEND THE TESTS
+
+From a clean checkout/extracted code directory, follow README environment setup,
+then run:
+  python -m pytest -q
+  python -m pytest tests/test_validation.py tests/test_mapping.py -q
+  python -m pytest tests/test_transport.py tests/test_state.py tests/test_delivery.py -q
+  python -m pytest --collect-only -q
+
+Use the virtual environment's Python if it is not activated. Run the entire suite
+after a meaningful integration change; use focused files during implementation.
+Store real export regressions and actual Splunk evidence privately. When updating
+this report, record newly observed totals and dates; do not retroactively call a
+pending or skipped check passed. No failure-injection test targets the live
+assessment index or real credentials.
+
+APPENDIX — COMPLETE TEST-FUNCTION INVENTORY
+
+Each parameter family above expands into separate pytest cases. The following
+inventory lists every collected function and its expanded case count, allowing a
+reviewer to locate source assertions without including every long parameter ID.
+
+tests/test_cli.py
+  test_validate_retains_source_and_needs_no_network [1 case]
+  test_dry_run_reports_warnings_and_quarantine_without_token_or_ledger [1 case]
+  test_bad_documents_fail_before_network [6 cases]
+  test_reports_cannot_overwrite_input [1 case]
+  test_live_send_requires_explicit_destination_and_state [1 case]
+  test_live_send_and_replay_use_real_ledger [1 case]
+  test_auth_failure_has_delivery_report_and_operational_exit [1 case]
+  test_reports_are_private_files [1 case]
+  test_report_paths_cannot_overwrite_configured_secret_or_trust [6 cases]
+
+tests/test_config.py
+  test_default_config_does_not_need_credentials [1 case]
+  test_relative_paths_are_based_on_config_file [1 case]
+  test_invalid_configuration_is_explicit [6 cases]
+  test_environment_wins_and_missing_token_error_never_echoes_secret [1 case]
+  test_missing_token_file_does_not_echo_path [1 case]
+  test_token_file_requires_private_permissions [1 case]
+
+tests/test_delivery.py
+  test_success_then_replay_sends_zero_and_reconciles_counts [1 case]
+  test_pending_is_durable_before_request [1 case]
+  test_explicit_retry_bounded_and_no_duplicate_warning [1 case]
+  test_unknown_retry_success_retains_possible_duplicate [1 case]
+  test_failure_stops_remaining_records [3 cases]
+  test_permanent_error_after_uncertain_attempt_stays_uncertain [1 case]
+  test_state_write_failure_before_request_sends_nothing [1 case]
+  test_acceptance_write_failure_is_uncertain_and_recovered [1 case]
+  test_keyboard_interrupt_recovers_uncertainty [1 case]
+  test_cross_run_conflict_is_reported_without_sending_and_other_ids_continue [1 case]
+  test_recovered_uncertain_version_warns_even_if_first_retry_succeeds [1 case]
+
+tests/test_mapping.py
+  test_severity_policy_boundaries [10 cases]
+  test_mapper_rejects_invalid_severity_even_when_called_directly [6 cases]
+  test_envelope_uses_detection_time_and_affected_host [1 case]
+  test_filename_follows_source_os_not_importer_os [5 cases]
+  test_unknown_or_malformed_optional_os_does_not_invent_filename [3 cases]
+  test_nulls_unknown_fields_and_pattern_pairing_survive_mapping [1 case]
+  test_coercion_changes_only_normalized_size_and_reports_its_reason [1 case]
+  test_rule_severity_and_disposition_are_distinct_without_inventing_actions [1 case]
+  test_revision_order_is_independent_of_unchanged_detection_time [1 case]
+  test_provenance_and_versions_are_explicit_and_repeatable [1 case]
+  test_mapper_refuses_quarantined_and_duplicate_rows [1 case]
+  test_invalid_optional_fields_are_not_promoted_to_normalized_meaning [1 case]
+
+tests/test_state.py
+  test_acceptance_persists_and_skip_is_scope_specific [1 case]
+  test_scope_does_not_include_token_and_normalizes_default_port [1 case]
+  test_known_or_uncertain_identity_blocks_changed_immutable [3 cases]
+  test_explicit_rejection_does_not_reserve_finding_identity [1 case]
+  test_tied_disposition_conflict_but_older_history_allowed [2 cases]
+  test_conflict_checks_survive_mapping_version_changes [1 case]
+  test_interrupted_pending_is_uncertain_on_recovery [1 case]
+  test_concurrent_ledger_user_refused_and_released_after_close [1 case]
+  test_other_process_cannot_open_active_ledger [1 case]
+  test_wrong_scope_cannot_record_attempt [1 case]
+  test_missing_attempt_cannot_be_falsely_accepted [1 case]
+
+tests/test_transport.py
+  test_request_checks_tls_disables_library_retries_and_redirects [1 case]
+  test_unsafe_endpoints_rejected [7 cases]
+  test_name_override_only_loopback_explicit_ca [1 case]
+  test_invalid_timeouts_rejected [6 cases]
+  test_invalid_header_token_has_safe_error [5 cases]
+  test_http_and_hec_must_both_succeed [22 cases]
+  test_transport_failure_classification_does_not_expose_exception [7 cases]
+  test_retry_after_is_bounded_and_bad_values_ignored [1 case]
+  test_nonfinite_json_never_sent [1 case]
+  test_real_https_receiver_accepts_only_trusted_certificate [1 case]
+  test_real_https_receiver_rejects_wrong_expected_name [1 case]
+  test_real_cn_only_certificate_requires_explicit_local_profile [1 case]
+  test_real_hec_receiver_http_success_with_error_is_not_accepted [1 case]
+
+tests/test_validation.py
+  test_clean_record_and_empty_snapshot_reconcile [1 case]
+  test_wrong_document_shape_is_fatal [5 cases]
+  test_non_json_or_non_utf8_values_fail_document_before_rows [4 cases]
+  test_non_object_row_is_accounted_for_without_blocking_other_rows [5 cases]
+  test_severity_rejects_outside_range_bool_or_coercion [7 cases]
+  test_missing_minimum_identity_or_evidence_is_quarantined [28 cases]
+  test_required_objects_cannot_be_missing_or_arrays [5 cases]
+  test_unknown_event_type_is_not_guessed [1 case]
+  test_invalid_size_does_not_get_rounded_or_guessed [11 cases]
+  test_lossless_size_conversion_preserves_source [4 cases]
+  test_invalid_hash_is_quarantined [5 cases]
+  test_invalid_or_naive_timestamps_are_quarantined [7 cases]
+  test_offsets_and_fractional_seconds_are_converted_to_utc [1 case]
+  test_supported_timestamp_precision_is_preserved [7 cases]
+  test_excess_timestamp_precision_is_explicitly_quarantined_in_every_time_field [12 cases]
+  test_submicrosecond_time_order_is_not_silently_collapsed [1 case]
+  test_microsecond_disposition_revisions_remain_distinct [1 case]
+  test_source_time_order_is_enforced [3 cases]
+  test_match_can_equal_collection_completion [1 case]
+  test_malformed_patterns_quarantine [6 cases]
+  test_empty_and_out_of_bounds_patterns_warn_without_deleting_evidence [1 case]
+  test_unreviewed_has_explicit_null_lifecycle_fields [3 cases]
+  test_reviewed_requires_a_valid_revision_date_not_before_match [3 cases]
+  test_unknown_disposition_is_preserved_and_flagged_without_guessing [1 case]
+  test_optional_bad_context_warns_but_unknown_new_fields_are_preserved [1 case]
+  test_exact_duplicate_rows_have_one_retained_version_and_reconcile [1 case]
+  test_all_immutable_conflict_members_quarantine_including_exact_copies [2 cases]
+  test_newer_and_stale_disposition_versions_coexist_as_history [1 case]
+  test_tied_differing_revisions_quarantine_all_ties_without_hiding_baseline [1 case]
+  test_shared_collection_conflict_marks_entire_group_not_just_outlier [1 case]
+  test_equivalent_collection_instants_with_different_offsets_are_consistent [1 case]
+  test_hash_size_conflict_warns_all_rows_and_does_not_merge_findings [1 case]
+  test_hash_size_uses_normalized_numeric_value_without_false_conflict [1 case]
+  test_fingerprints_do_not_change_with_row_position_file_hash_or_key_order [1 case]
+  test_validation_does_not_mutate_input_and_retains_independent_original [1 case]
+
+Supporting fixture file: tests/synthetic_validation.py (not independently collected).

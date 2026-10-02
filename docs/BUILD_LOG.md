@@ -27,3 +27,9 @@ Integrated verified HTTPS transport, durable pending attempts, acceptance ledger
 Independent review found two boundary issues and both received regression tests: report output could collide with configured token/CA paths, and timestamps beyond microsecond precision could silently truncate. Outputs now protect all configured input/trust/credential/state paths before writing; unsupported precision is explicitly rejected. Token-file permissions are enforced. Possible-duplicate delivery is visible in the terminal as well as JSON.
 
 Validation at this checkpoint: **279 automated cases passed** on Python 3.14.2/macOS, including a real generated-certificate HTTPS receiver and subprocess ledger locking. A wheel installed into a fresh environment outside the checkout ran the actual CLI and synthetic dry run successfully. Live browser indexing, replay counts, and disposition lifecycle checks remain outstanding and are not counted as passed.
+
+## October 1, 2026 — review materials and portable verification
+
+GitHub Actions passed the core checkpoint on both Python 3.11 and Python 3.14 under Ubuntu. Added a detailed plain-text report covering all 97 test functions / 279 parameterized cases, field-by-field mapping decisions, a timed narration/action script, and a living retrospective. Created and validated three synthetic lifecycle fixtures for the pending live current-state check.
+
+A second independent documentation audit checked claims against the implementation and outstanding browser work. It corrected test-count/lifecycle wording and prompted explicit reviewer-package input paths and native Splunk start/stop instructions. The recording is still pending; no video artifact or live search verification is claimed.

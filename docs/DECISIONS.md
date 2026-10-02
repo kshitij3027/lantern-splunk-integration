@@ -27,3 +27,6 @@ Delivery does not promise exactly-once storage. HEC acceptance is independently 
 - Every run has a manifest (`run-report.json`) listing artifacts produced by that run. This distinguishes current output from stale files if an operator reuses a directory.
 - Live sending requires explicit configuration and ledger paths. Dry run has no credential, network, or ledger dependency.
 - The local certificate compatibility profile retains chain and name checks and only applies to literal loopback plus an explicit CA. Remote endpoints use normal verification.
+
+- Timestamp precision is limited to microseconds (up to six fractional digits). Higher precision is rejected explicitly rather than rounded into misleading equal timestamps.
+- The detailed retrospective and test report distinguish HEC acceptance, automated transport tests, and independent Splunk indexing checks. A blocked browser check remains pending.

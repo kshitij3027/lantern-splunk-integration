@@ -1,0 +1,48 @@
+[
+  {
+    "event_id": "synthetic-lifecycle-001",
+    "event_type": "indicator_match",
+    "timestamp": "2026-01-10T12:00:00Z",
+    "severity": 88,
+    "host": {
+      "host_id": "synthetic-host-01",
+      "hostname": "endpoint-01.synthetic.example",
+      "os": "LINUX",
+      "ip": "192.0.2.10",
+      "agent_version": "1.0"
+    },
+    "rule": {
+      "name": "Synthetic_Example_Rule",
+      "namespace": "synthetic",
+      "version": 1,
+      "author": "test-fixture"
+    },
+    "file": {
+      "path": "/tmp/synthetic/first.bin",
+      "size": 100,
+      "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "mtime": "2026-01-09T12:00:00Z",
+      "owner": "test-user"
+    },
+    "collection": {
+      "collection_id": "synthetic-collection-01",
+      "job_name": "Synthetic test collection",
+      "requested_by": "test-runner",
+      "completed_at": "2026-01-10T13:00:00Z"
+    },
+    "matched_patterns": [
+      {
+        "pattern_id": "synthetic-pattern-01",
+        "offset": 4
+      }
+    ],
+    "disposition": {
+      "status": "UNREVIEWED",
+      "analyst": null,
+      "comment": null,
+      "updated_at": null
+    },
+    "synthetic": true,
+    "synthetic_note": "Invented finding for testing disposition ordering; no assessment data."
+  }
+]

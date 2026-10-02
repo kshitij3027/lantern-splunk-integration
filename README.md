@@ -46,6 +46,17 @@ Reports contain security evidence. Store them privately and use a separate outpu
 
 Exit codes: **0** completed without warnings/quarantine; **2** completed with quality issues; **1** operational/input/configuration/delivery failure. Duplicate input rows are reported but do not alone cause exit 2. A mixed-quality file can send its eligible rows successfully and still return 2. A fatal document error sends nothing.
 
+## Starting and stopping a local Splunk installation
+
+Run these as the account that owns/runs your native installation, replacing the directory:
+
+```sh
+/path/to/splunk/bin/splunk start
+/path/to/splunk/bin/splunk status
+```
+
+On first startup, complete Splunk's license/account prompts yourself, then sign into the local Web address shown by the command. Once your demo and verification are finished, stop that local process with `/path/to/splunk/bin/splunk stop`. Stopping a process does not cancel a Cloud subscription. Service-managed Linux installations should use their configured service manager instead. See Splunk's [first-start instructions](https://help.splunk.com/en/splunk-enterprise/get-started/install-and-upgrade/10.6/start-using-splunk-enterprise/start-splunk-enterprise-for-the-first-time) and [start/stop reference](https://help.splunk.com/en/splunk-enterprise/administer/admin-manual/10.0/start-splunk-enterprise-and-perform-initial-tasks/start-and-stop-splunk-enterprise).
+
 ## Configure and send
 
 1. In Splunk, create an event index (the examples use `volexity_lantern`). Enable HTTPS HEC, create a dedicated token restricted to this index, and retain its certificate authority when using a private CA.
@@ -94,5 +105,9 @@ Indexed quality flags describe the snapshot when a version was sent. The latest 
 - [Decisions and tradeoffs](docs/DECISIONS.md)
 - [Implementation checkpoints](docs/BUILD_LOG.md)
 - [Analyst investigation guide](docs/INVESTIGATION.md)
+- [Synthetic lifecycle verification](docs/LIFECYCLE_CHECK.md)
+- [Detailed test cases](docs/TEST_CASES.txt)
+- [Timed narration and screen actions](docs/DEMO_SCRIPT.md)
+- [Living post-mortem](docs/POST_MORTEM.md)
 
-Implementation and live verification are recorded as they are completed. Detailed test evidence and the demo script are added at the final verification milestone. Trial cleanup is a post-delivery task, after preserving the submitted artifacts.
+Implementation and live verification are recorded as they are completed. The test report distinguishes automated results from pending live/browser checks. Trial cleanup is a post-delivery task, after preserving the submitted artifacts.
