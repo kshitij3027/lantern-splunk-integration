@@ -1,0 +1,8 @@
+index="volexity_lantern" source="lantern:assessment" sourcetype="lantern:indicator_match" earliest=0 latest=now
+| spath
+| spath path=quality_flags{} output=quality_flags
+| sort 0 -num(disposition_rank), -num(disposition_time), +str(event_version)
+| dedup id
+| where disposition_status="UNREVIEWED" AND (severity="high" OR severity="critical")
+| sort 0 -num(severity_id), +num(_time), +str(id)
+| table id _time severity severity_id dest signature file_path disposition_status quality_flags event_version

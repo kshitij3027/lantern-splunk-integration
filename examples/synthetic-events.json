@@ -1,0 +1,186 @@
+[
+  {
+    "event_id": "SYNTHETIC-001",
+    "event_type": "indicator_match",
+    "timestamp": "2026-01-10T12:00:00Z",
+    "severity": 88,
+    "host": {
+      "host_id": "synthetic-host-01",
+      "hostname": "endpoint-01.synthetic.example",
+      "os": "LINUX",
+      "ip": "192.0.2.10",
+      "agent_version": "1.0"
+    },
+    "rule": {
+      "name": "Synthetic_Example_Rule",
+      "namespace": "synthetic",
+      "version": 1,
+      "author": "test-fixture"
+    },
+    "file": {
+      "path": "/tmp/synthetic/first.bin",
+      "size": 100,
+      "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "mtime": "2026-01-09T12:00:00Z",
+      "owner": "test-user"
+    },
+    "collection": {
+      "collection_id": "synthetic-collection-01",
+      "job_name": "Synthetic test collection",
+      "requested_by": "test-runner",
+      "completed_at": "2026-01-10T13:00:00Z"
+    },
+    "matched_patterns": [
+      {
+        "pattern_id": "synthetic-pattern-01",
+        "offset": 4
+      }
+    ],
+    "disposition": {
+      "status": "UNREVIEWED",
+      "analyst": null,
+      "comment": null,
+      "updated_at": null
+    },
+    "synthetic": true,
+    "synthetic_note": "Invented example data; not an assessment or customer finding."
+  },
+  {
+    "event_id": "SYNTHETIC-002",
+    "event_type": "indicator_match",
+    "timestamp": "2026-01-10T12:00:00Z",
+    "severity": 77,
+    "host": {
+      "host_id": "synthetic-host-01",
+      "hostname": "endpoint-01.synthetic.example",
+      "os": "LINUX",
+      "ip": "192.0.2.10",
+      "agent_version": "1.0"
+    },
+    "rule": {
+      "name": "Synthetic_Example_Rule",
+      "namespace": "synthetic",
+      "version": 1,
+      "author": "test-fixture"
+    },
+    "file": {
+      "path": "/tmp/synthetic/second.bin",
+      "size": 100,
+      "sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+      "mtime": "2026-01-09T12:00:00Z",
+      "owner": "test-user"
+    },
+    "collection": {
+      "collection_id": "synthetic-collection-01",
+      "job_name": "Synthetic test collection",
+      "requested_by": "test-runner",
+      "completed_at": "2026-01-10T13:00:00Z"
+    },
+    "matched_patterns": [
+      {
+        "pattern_id": "synthetic-pattern-01",
+        "offset": 4
+      }
+    ],
+    "disposition": {
+      "status": "UNREVIEWED",
+      "analyst": null,
+      "comment": null,
+      "updated_at": null
+    },
+    "synthetic": true,
+    "synthetic_note": "Invented example data; not an assessment or customer finding."
+  },
+  {
+    "event_id": "SYNTHETIC-003",
+    "event_type": "indicator_match",
+    "timestamp": "2026-01-10T12:00:00Z",
+    "severity": 94,
+    "host": {
+      "host_id": "synthetic-host-02",
+      "hostname": "endpoint-02.synthetic.example",
+      "os": "LINUX",
+      "ip": "192.0.2.20",
+      "agent_version": "1.0"
+    },
+    "rule": {
+      "name": "Synthetic_Example_Rule",
+      "namespace": "synthetic",
+      "version": 1,
+      "author": "test-fixture"
+    },
+    "file": {
+      "path": "/tmp/synthetic/example.bin",
+      "size": 100,
+      "sha256": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+      "mtime": "2026-01-09T12:00:00Z",
+      "owner": "test-user"
+    },
+    "collection": {
+      "collection_id": "synthetic-collection-01",
+      "job_name": "Synthetic test collection",
+      "requested_by": "test-runner",
+      "completed_at": "2026-01-10T13:00:00Z"
+    },
+    "matched_patterns": [
+      {
+        "pattern_id": "synthetic-pattern-01",
+        "offset": 4
+      }
+    ],
+    "disposition": {
+      "status": "BENIGN",
+      "analyst": "test-analyst",
+      "comment": "Synthetic review",
+      "updated_at": "2026-01-11T12:00:00Z"
+    },
+    "synthetic": true,
+    "synthetic_note": "Invented example data; not an assessment or customer finding."
+  },
+  {
+    "event_id": "SYNTHETIC-004",
+    "event_type": "indicator_match",
+    "timestamp": "2026-01-10T12:00:00Z",
+    "severity": 42,
+    "host": {
+      "host_id": "synthetic-host-03",
+      "hostname": "endpoint-03.synthetic.example",
+      "os": "LINUX",
+      "ip": "192.0.2.30",
+      "agent_version": "1.0"
+    },
+    "rule": {
+      "name": "Synthetic_Example_Rule",
+      "namespace": "synthetic",
+      "version": 1,
+      "author": "test-fixture"
+    },
+    "file": {
+      "path": "/tmp/synthetic/example.bin",
+      "size": "00100",
+      "sha256": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+      "mtime": "2026-01-09T12:00:00Z",
+      "owner": "test-user"
+    },
+    "collection": {
+      "collection_id": "synthetic-collection-01",
+      "job_name": "Synthetic test collection",
+      "requested_by": "test-runner",
+      "completed_at": "2026-01-10T13:00:00Z"
+    },
+    "matched_patterns": [
+      {
+        "pattern_id": "synthetic-pattern-01",
+        "offset": 4
+      }
+    ],
+    "disposition": {
+      "status": "UNREVIEWED",
+      "analyst": null,
+      "comment": null,
+      "updated_at": null
+    },
+    "synthetic": true,
+    "synthetic_note": "Invented example data; not an assessment or customer finding."
+  }
+]

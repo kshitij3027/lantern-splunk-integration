@@ -18,3 +18,12 @@
 Severity policy: 0–19 informational; 20–39 low; 40–69 medium; 70–89 high; 90–100 critical. Changes require a mapping-version change.
 
 Delivery does not promise exactly-once storage. HEC acceptance is independently checked through Splunk search. Record implementation deviations below as they occur.
+
+## Implementation details and deviations
+
+- Use ordinary package installation, not editable installation, in reviewer instructions. The host marks generated editable `.pth` files hidden and Python 3.14 skips them. Development tests explicitly include `src`; clean installed-package verification remains required.
+- Exit codes are 0 (clean completed), 2 (completed with warnings or quarantine), and 1 (operational failure). Duplicate input rows alone are informational.
+- Input loading rejects duplicate JSON object keys, non-finite numbers, and invalid UTF-8 before sending any event. An unknown status remains literal and flagged.
+- Every run has a manifest (`run-report.json`) listing artifacts produced by that run. This distinguishes current output from stale files if an operator reuses a directory.
+- Live sending requires explicit configuration and ledger paths. Dry run has no credential, network, or ledger dependency.
+- The local certificate compatibility profile retains chain and name checks and only applies to literal loopback plus an explicit CA. Remote endpoints use normal verification.

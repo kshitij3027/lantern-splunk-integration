@@ -1,0 +1,16 @@
+[splunk]
+endpoint = "https://splunk.example.invalid:8088/services/collector/event"
+index = "volexity_lantern"
+source = "lantern:assessment"
+sourcetype = "lantern:indicator_match"
+# Change this when an instance/index is rebuilt and prior acceptance state is stale.
+instance_id = "my-splunk-instance"
+token_env = "SPLUNK_HEC_TOKEN"
+# Optional paths are relative to this config file; never commit a live token.
+# token_file = "/absolute/private/path/hec-token"
+# ca_file = "/absolute/path/trusted-ca.pem"
+# Local CN-only compatibility, only with a loopback HTTPS endpoint:
+# tls_server_name = "SplunkServerDefaultCert"
+connect_timeout = 5
+read_timeout = 15
+max_attempts = 3
