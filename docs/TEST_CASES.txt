@@ -1,7 +1,7 @@
 LANTERN TO SPLUNK PROTOTYPE — TEST CASES AND VERIFICATION RECORD
 Version: 0.1.0
 Recorded: October 1, 2026, 9:56 PM America/Los_Angeles
-Status: AUTOMATED SUITE PASSED; LIVE SEARCH/RELEASE GATES STILL OPEN
+Status: AUTOMATED SUITE AND LIVE PROTOTYPE CHECKS PASSED; FINAL RELEASE/RECORDING OPEN
 
 1. WHAT WAS ACTUALLY RUN
 
@@ -562,7 +562,8 @@ P01 — Full provided-export validation
 Expected/observed: 200 rows = 193 eligible + 7 quarantined + 0 exact input duplicates.
 Within eligible: 33 warning rows + 160 without warnings. Expected high/critical
 UNREVIEWED logical work-queue candidates: 24.
-Status: PASS for private offline baseline; live queue equality remains pending.
+Status: PASS for private offline baseline and independently reconciled live queue.
+See L01–L03 for browser-derived evidence and exact identity comparisons.
 Evidence type: Actual importer/private input regression, not synthetic unit tests.
 
 P02 — Actual local Splunk Python TLS smoke
@@ -575,7 +576,8 @@ that the event or assessment dataset is searchable.
 P03 — Installed CLI sends eligible assessment records
 Expected/observed: 193 eligible records accepted in 193 HTTP attempts; no delivery
 failures reported by the project lead.
-Status: PASS for HEC acceptance; independent indexing reconciliation PENDING.
+Status: PASS for HEC acceptance and subsequent independent indexing reconciliation
+under L01. The delivery report alone was not used as proof of searchable indexing.
 Evidence type: Actual installed CLI, actual Splunk HEC, real delivery ledger.
 
 P04 — Wheel installed outside the source checkout
@@ -590,53 +592,117 @@ P05 — Prepared synthetic lifecycle input
 Expected/observed: Three public lifecycle files prepared and validated offline:
 initial UNREVIEWED, newer BENIGN, and stale MALICIOUS history.
 Status: PASS for fixture preparation/offline validation, as verified by project
-lead. They have NOT been sent to real Splunk yet; no live lifecycle claim is made.
+lead. Live lifecycle verification is tracked separately under L06.
 
 9. LIVE BROWSER, REPRODUCTION, AND RELEASE GATES — MIXED STATUS
 
-Do not change these to PASS based solely on HTTP acceptance, unit tests, or total
-counts. Add the actual observation, evidence location, and date after execution.
+Live evidence reviewed: October 1, 2026, 10:15 PM America/Los_Angeles.
+These are real Splunk browser checks plus independent local comparison of captured
+UI results to the importer preview. They are NOT added to the automated pytest
+count. Private evidence is retained outside the public tracked file set.
+Pending checks remain pending; HEC acceptance alone is not a pass for indexing.
 
 L01 — Indexed identity/version equality
 Procedure: In the real Splunk browser, constrain index/source/sourcetype and use
 All time; extract event ID and event version; compare the complete returned set
 with the eligible mapped export.
 Expected: Exactly the eligible ID/version set; no missing or unexpected versions.
-Actual/status: PENDING — not yet independently verified in this report.
+Actual/status: PASS. Browser UI table results were captured from both pages
+(100 + 93 rows). Independent local assertions compared all 193 distinct ID/version
+pairs with import-1/mapped-events.jsonl: exact equality, zero missing pairs, zero
+unexpected pairs. Every pair had one stored copy, for 193 physical events.
+Evidence: private/verification/browser/pairs-before-replay.json;
+  private/verification/browser/pair-reconciliation.json;
+  private/verification/browser/extraction-fixed.jpg.
+The raw browser rows were recomputed independently rather than trusting only the
+existing reconciliation summary. No actual source identifiers are copied here.
 
 L02 — Quarantine isolation and synthetic-source isolation
 Procedure: Verify quarantined findings are absent from the assessment dataset;
 exclude setup and synthetic lifecycle sources from assessment searches.
 Expected: No quarantined IDs or setup/lifecycle probes contaminate assessment view.
-Actual/status: PENDING.
+Actual/status: PASS. Independently derived the five distinct quarantined IDs from
+the seven withheld rows and checked their intersection with both before/after
+browser result sets: empty. Search URLs constrain the exact assessment index,
+source, and sourcetype; the indexed set equals the 193 eligible pairs with no
+unexpected setup or synthetic lifecycle findings.
+Evidence: private/verification/import-1/quarantine.json and
+  private/verification/browser/pairs-before-replay.json / pairs-after-replay.json.
 
 L03 — Analyst queue correctness
 Procedure: Execute final current-state search: sort complete rows by revision rank
 and time, deduplicate by finding ID, then filter high/critical UNREVIEWED.
 Expected: 24 assessment findings if the private baseline/policy remains unchanged.
-Actual/status: PENDING.
+Actual/status: PASS. Completed browser search shows Statistics (24). Independent
+local parsing extracted 24 distinct ID/version pairs from the captured table;
+that set exactly equals the high/critical UNREVIEWED set derived from the original
+193 mapped candidates. There are zero missing or unexpected queue entries.
+Evidence: private/verification/browser/queue-results.txt and queue-24.jpg;
+  private/verification/import-1/mapped-events.jsonl.
+This confirms the actual search output, not only a matching total count.
 
 L04 — Inspect evidence and related findings in browser
-Procedure: Expand one eligible finding; trace normalized values to original Lantern
-object; pivot by host/hash/collection; inspect a warning-bearing finding.
+Procedure: Inspect one eligible finding in the history/evidence view; trace
+normalized values to the original Lantern object; pivot by host/hash and inspect
+collection context and warning-bearing findings.
 Expected: Values are understandable, original pattern/offset pairs preserved,
 related searches return matching imported evidence; warnings remain visible.
-Actual/status: PENDING.
+Actual/status: PASS. Captured history view exposes the complete original Lantern
+object for a selected finding. Independent local JSON decoding confirmed that
+object exactly equals the preserved Lantern source in the mapped preview,
+including collection/requestor, rule provenance, file owner/hash, explicit nulls,
+and paired pattern ID/offset. A browser diagnostic reports 193 non-null nested
+evidence objects for 193 events and one scalar collection ID per event.
+The exact host pivot returns eight ID/version pairs; the shared-hash pivot returns
+25 pairs across nine distinct hosts, retaining hash_size_conflict warnings; the
+quality-attention pivot returns 33 pairs, including an unfamiliar disposition
+with its unknown_disposition warning. Independent local comparison of every
+captured pair against the corresponding preview filter found exact equality for
+all three pivots, not just matching counts.
+Evidence: private/verification/browser/finding-original-evidence.txt;
+  evidence-extraction-diagnostic.txt; host-pivot.txt; hash-pivot.txt;
+  quality-pivot.txt and associated screenshots;
+  private/verification/import-1/mapped-events.jsonl.
+Original evidence inspection and a visible collection field were verified; a
+separate collection-filter pivot was not needed for this recorded scenario.
 
 L05 — Controlled live replay
 Procedure: Record actual raw assessment count and ID/version set; repeat the same
 fully successful import with the same ledger; repeat the search.
 Expected: CLI sends zero requests, all eligible versions previously accepted;
 physical assessment count and logical set do not grow in this controlled replay.
-Actual/status: PENDING. Automated ledger replay is already covered separately.
+Actual/status: PASS. import-2/delivery-report.json reports 0 accepted anew,
+193 previously accepted, 0 rejected, 0 uncertain, 0 not attempted, and 0 HTTP
+requests. Its 193 record identities equal the original preview; every record has
+zero attempts. Independent comparison of before/after browser captures found the
+same exact 193 ID/version pairs, one stored copy each, and physical count 193
+both times. There was no growth in this controlled successful replay.
+Evidence: private/verification/import-2/delivery-report.json;
+  private/verification/browser/pairs-before-replay.json / pairs-after-replay.json.
+This does not establish exactly-once ingestion during a lost-response retry.
 
 L06 — Live disposition lifecycle and stale history
 Procedure: In an isolated synthetic source, import baseline UNREVIEWED followed by
 newer BENIGN and then stale MALICIOUS history; run final queue/history searches.
 Expected: Newer judgment removes the finding from the unreviewed queue; older
 history cannot resurrect it; all legitimate versions remain inspectable.
-Actual/status: PENDING. Unit mapping/validation/state coverage is not a substitute
-for testing the actual saved SPL against the real index.
+Actual/status: PASS in real Splunk. Browser captures show queue size 1 after
+baseline, 0 after the newer BENIGN revision, and still 0 after stale MALICIOUS
+history arrived last. The current-state view remains BENIGN after both reviews.
+History grows from two to three distinct versions, ordered BENIGN, MALICIOUS,
+UNREVIEWED by their source revision semantics rather than arrival time.
+Independent local verification recomputed event-version fingerprints from all
+three public fixtures and compared them with captured history cells: exact match
+for the two-version and three-version histories. Every history row has one stored
+copy and the same original detection time; only disposition/revision changes.
+The one-entry baseline queue contains the expected baseline version; both later
+queue captures show Statistics (0) and no finding row.
+Evidence: private/verification/browser/lifecycle-baseline.txt;
+  lifecycle-benign-{queue,current,history}.txt;
+  lifecycle-stale-{queue,current,history}.txt and associated screenshots;
+  examples/lifecycle/01-baseline.json, 02-newer-review.json, 03-older-review.json.
+This is a live browser regression, independently reconciled against public
+fixtures, and is separate from the 279 automated pytest cases.
 
 L07 — Reviewer reproduction from a fresh package
 Procedure: Extract curated ZIP into a fresh directory; create a fresh virtual
@@ -650,15 +716,42 @@ source tree produced the private assessment preview: 193 eligible, 7 quarantined
 33 warnings, exit 2. Imported package location resolved inside that new venv.
 Evidence: private/verification/zip-reproduction.json and package-manifest.json
 (retained privately; neither credentials nor private evidence are published).
-Final refreshed archive and live destination steps remain separate release gates.
+Final refreshed-archive verification and recipient access remain release gates;
+real destination, analyst pivots, replay, and lifecycle checks are now complete.
 
 L08 — Release and recording verification
 Procedure: Inspect ZIP contents for source/docs/tests, secret exclusion, absence of
 local ledger/cache/venv/Splunk binaries; verify upload/access; play complete video.
 Expected: Playable and readable end-to-end recording; final narrated submission
 within required 3–4 minutes; intended recipient can access final artifacts.
-Actual/status: PENDING. A future silent reference recording is distinct from the
-user's final narrated assessment submission.
+Actual/status: PENDING for final release and recording closeout.
+  Reference screen capture: awaiting finished-file metadata and playback validation.
+  Final narrated assessment video: user rehearsal/narration and 3–4 minute final
+    playback verification remain pending.
+  Final refreshed ZIP and recipient-access/upload checks: remain pending.
+A silent reference recording is distinct from the user's final narrated assessment
+submission; do not mark the narrated-video gate passed because a reference exists.
+
+L09 — Live field-extraction defect and corrective verification
+Purpose: Detect when valid stored events produce misleading grouped statistics.
+Observed failure: On this instance, automatic JSON extraction plus bare spath
+made id and event_version multivalued with two identical values each. Grouping by
+both fields reported four copies per pair, although a direct physical count was
+193. This was a search-extraction defect, not evidence of four ingested copies.
+Correction: Keep only _raw, _time, and _indextime before explicit extraction:
+  | fields _raw _time _indextime
+  | spath
+Expected: Each ID/version scalar appears once; counts and exact-set checks agree.
+Actual/status: PASS. Corrected browser diagnostic showed physical count 193,
+193 distinct IDs, 193 distinct versions, mvcount(id)=1 and
+mvcount(event_version)=1. Corrected pair query showed one stored copy per pair.
+The browser operator directly observed the initial two-value/four-count symptom;
+the corrected screenshot and before/after exact-pair tables were independently
+inspected and reconciled locally. Final search definitions use the corrected
+extraction order. This is a live regression case, not an extra pytest test.
+Evidence: private/verification/browser/extraction-fixed.jpg and pair captures;
+  splunk/searches/01_current_queue.spl, 02_finding_history.spl, 03_related_evidence.spl;
+  docs/INVESTIGATION.md explains the correction and its reason.
 
 10. HOW TO REPEAT OR EXTEND THE TESTS
 

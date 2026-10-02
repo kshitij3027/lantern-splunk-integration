@@ -30,3 +30,6 @@ Delivery does not promise exactly-once storage. HEC acceptance is independently 
 
 - Timestamp precision is limited to microseconds (up to six fractional digits). Higher precision is rejected explicitly rather than rounded into misleading equal timestamps.
 - The detailed retrospective and test report distinguish HEC acceptance, automated transport tests, and independent Splunk indexing checks. A blocked browser check remains pending.
+
+- Live Splunk verification exposed duplicate scalar values when automatic JSON extraction was followed by bare `spath`. Searches now retain `_raw`, `_time`, and `_indextime` before explicit extraction. This preserves evidence while avoiding multivalue cross-products in grouped counts. The first exact-set check and controlled replay independently found 193 physical events with one copy per version.
+- OBS screen capture is the selected recording tool. The reference clip is silent; the final 3–4 minute narrated submission remains a separate rehearsal/recording step.

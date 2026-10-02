@@ -1,4 +1,5 @@
 index="volexity_lantern" source="lantern:assessment" sourcetype="lantern:indicator_match" earliest=0 latest=now
+| fields _raw _time _indextime
 | spath
 | spath path=quality_flags{} output=quality_flags
 | spath path=lantern.collection.collection_id output=collection_id

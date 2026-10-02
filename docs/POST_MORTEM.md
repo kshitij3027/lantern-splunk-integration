@@ -1,6 +1,6 @@
 # Build retrospective — living document
 
-Status: implementation and automated verification completed for the current milestone; browser E2E verification, final recording, submission, and trial cleanup remain open. This document is updated as those steps happen.
+Status: implementation, automated verification, live indexed-set/replay verification, and disposition lifecycle checks are complete. Original-evidence and investigation-pivot checks also passed. Recording, submission, and trial cleanup remain open. This document is updated as those steps happen.
 
 ## Intended outcome
 
@@ -25,11 +25,15 @@ Demonstrate a trustworthy file-based path from Lantern findings to a real Splunk
 | Independent review found a report-path collision could overwrite a configured credential/trust file | Resolve and protect those paths before any output write; add regression cases | Prevented a real operator configuration edge case from damaging connection material |
 | Source timestamps can be more precise than Python datetime | Explicitly reject unsupported sub-microsecond precision rather than silently truncate | Prevents false time-order or tied-revision conclusions |
 | Browser authentication expired before live search verification | Continue offline tests/docs and request user sign-in immediately | Separate HEC acceptance from actual indexing proof; do not claim a blocked check passed |
-| User requested Photo Booth for an app walkthrough | Explain its webcam capture behavior and clarify whether screen capture is intended | The final recording must actually show the product workflow |
+| User requested Photo Booth for an app walkthrough | User selected OBS screen capture after clarification | The recording shows the product workflow; a silent reference and narrated final take are distinct |
+| Live Splunk combined automatic JSON extraction with bare `spath`, turning scalar IDs/versions into duplicate multivalues | Clear extracted fields while keeping raw evidence and timestamps, then run explicit extraction; repeat exact-set and replay verification | Prevented misleading grouped copy counts even though only 193 physical events were stored |
+| OBS crashed opening settings and later became unresponsive during a recording attempt | Reopened in Safe Mode; use a separate profile/scene collection, hardware Apple H.264, and Matroska; verify a short saved test first | Isolated recording settings and confirmed readable 1080p output before the walkthrough |
 
 ## Results established so far
 
-The implemented validator matches the approved private baseline: 200 rows, 193 eligible, 7 quarantined, 33 eligible with warnings, 160 clean, and 24 expected high/critical unreviewed findings. The installed CLI delivered all 193 eligible records to local HEC with 193 acceptance responses, no rejections, and no uncertain outcomes. These statements do not by themselves establish search indexing; that proof is tracked separately in the detailed test report.
+The implemented validator matches the approved private baseline: 200 rows, 193 eligible, 7 quarantined, 33 eligible with warnings, 160 clean, and 24 expected high/critical unreviewed findings. The installed CLI delivered all 193 eligible records to local HEC with 193 acceptance responses, no rejections, and no uncertain outcomes. Independent browser capture subsequently proved the exact 193 ID/version pairs, one stored copy per version, no quarantined IDs, and the exact 24-row queue. A same-ledger replay sent zero HTTP requests and left the indexed set and physical count unchanged. The synthetic lifecycle moved from UNREVIEWED to newer BENIGN, then received older MALICIOUS history: the queue stayed empty, BENIGN stayed current, and all three versions retained the same original detection time.
+
+All 193 originals were preserved. Host and shared-hash pivots matched the expected sets (8 findings on the selected host; 25 shared-hash findings across 9 hosts), and all 33 warning-bearing findings remained searchable. Three private, unscheduled saved reports support the analyst workflow.
 
 The public sample is newly invented and produces four eligible records, one warning, and two queue candidates. Public code and tests exclude supplied assessment records and credentials. Git records meaningful checkpoints rather than one final code dump.
 
@@ -47,4 +51,4 @@ Ask analysts whether the queue and pivots match their daily investigations. Conf
 
 ## Closeout still required
 
-Finish live indexing/replay/lifecycle proof, review the final test report, rehearse and record the narrated video, verify ZIP reproduction and recipient access, and preserve the submitted artifacts. Only after delivery, close the Cloud trial if provisioned and remove/stop the local trial, revoke its token, and verify no paid/billable resource remains. Do not delete the user's entire Splunk account.
+Review the completed live test report, finalize the silent reference capture, rehearse and record the narrated video, refresh the verified reviewer ZIP, verify recipient access, and preserve the submitted artifacts. Only after delivery, close the Cloud trial if provisioned and remove/stop the local trial, revoke its token, and verify no paid/billable resource remains. Do not delete the user's entire Splunk account.

@@ -10,13 +10,15 @@ After running each query successfully, use **Save As → Report**, keep its perm
 
 | File | Suggested report title | Result |
 |---|---|---|
-| [`01_current_queue.spl`](../splunk/searches/01_current_queue.spl) | Lantern — Current review queue | One current row per high/critical UNREVIEWED finding, highest score first |
-| [`02_finding_history.spl`](../splunk/searches/02_finding_history.spl) | Lantern — Finding history | Every distinct source version, with the complete preserved source evidence |
-| [`03_related_evidence.spl`](../splunk/searches/03_related_evidence.spl) | Lantern — Related evidence and quality | Current findings, hash relationships, and evidence requiring attention |
+| [`01_current_queue.spl`](../splunk/searches/01_current_queue.spl) | Lantern - Current review queue | One current row per high/critical UNREVIEWED finding, highest score first |
+| [`02_finding_history.spl`](../splunk/searches/02_finding_history.spl) | Lantern - Finding history | Every distinct source version, with the complete preserved source evidence |
+| [`03_related_evidence.spl`](../splunk/searches/03_related_evidence.spl) | Lantern - Related evidence and quality | Current findings, hash relationships, and evidence requiring attention |
 
 ## 1. Prioritize current work
 
-The work queue extracts JSON with `spath`, sorts **complete rows** by descending disposition rank and numeric revision time, then uses `dedup id`. Only after that does it filter for `UNREVIEWED` and high/critical severity. This keeps an older unreviewed version from reappearing after an analyst reviews the finding.
+The work queue first keeps `_raw`, `_time`, and `_indextime`, then extracts JSON with `spath`, sorts **complete rows** by descending disposition rank and numeric revision time, then uses `dedup id`. Only after that does it filter for `UNREVIEWED` and high/critical severity. This keeps an older unreviewed version from reappearing after an analyst reviews the finding.
+
+The initial `fields` command removes automatic JSON extractions before explicit extraction. On the tested Splunk instance, combining automatic extraction and a bare `spath` duplicated scalar values into multivalue fields, inflating grouped counts. Clearing extracted fields first keeps each scalar single-valued while retaining the full raw event.
 
 `_time` remains the original detection time across revisions. It does not decide which disposition is current. Independent `latest()` aggregations over several fields could select inconsistent evidence; these searches retain a single complete version instead. `sort 0` avoids Splunk's default sort-result limit, at the cost of retaining the full result set for this small prototype. See the official [sort](https://help.splunk.com/en/splunk-enterprise/search/spl-search-reference/10.0/search-commands/sort) and [dedup](https://help.splunk.com/en/splunk-enterprise/search/spl-search-reference/10.0/search-commands/dedup) references.
 
@@ -70,6 +72,7 @@ A successful HEC response proves acceptance, not searchable indexing. Run this c
 
 ```spl
 index="volexity_lantern" source="lantern:assessment" sourcetype="lantern:indicator_match" earliest=0 latest=now
+| fields _raw _time _indextime
 | spath
 | stats count AS stored_events dc(id) AS distinct_findings dc(event_version) AS distinct_versions
 ```
@@ -78,6 +81,7 @@ Compare an export of these pairs with the importer's eligible preview; a matchin
 
 ```spl
 index="volexity_lantern" source="lantern:assessment" sourcetype="lantern:indicator_match" earliest=0 latest=now
+| fields _raw _time _indextime
 | spath
 | stats count AS stored_copies BY id event_version
 | sort 0 +str(id), +str(event_version)

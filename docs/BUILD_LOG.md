@@ -37,3 +37,17 @@ A second independent documentation audit checked claims against the implementati
 ## October 1, 2026 — ZIP reproduction checkpoint
 
 Built a curated private reviewer ZIP containing source, tests, documentation, synthetic examples, and the unchanged supplied input/schema. Verified its checksum manifest, excluded live secrets/configuration/ledger/cache/virtual environments, then extracted into a fresh directory and installed into a new virtual environment. All 279 tests passed again; the installed CLI outside the source tree reproduced the assessment preview (193 eligible, 7 quarantined, 33 warnings, exit 2). This is a review candidate; browser E2E, recording, upload/access verification, and final submission are still pending.
+
+## October 1, 2026 — independent live Splunk reconciliation
+
+After browser sign-in, the initial grouped query appeared to show four copies per finding. Live diagnostics isolated duplicate automatic-plus-explicit JSON extraction: two ID values and two version values created a grouped cross-product, despite 193 physical events. Searches now retain raw evidence/timestamps before explicit extraction. Browser-captured pair sets then exactly matched all 193 eligible source versions, each with one stored copy; all five distinct quarantined IDs were absent. The exact 24 queue pairs matched the independently derived expected set.
+
+The controlled installed-CLI replay reported 193 previously accepted versions and zero HTTP attempts. A second complete browser pair capture proved the same 193 physical events and identical logical set. An independent agent checked the captured files and replay report against the validator output. No acceptance count was substituted for indexing proof.
+
+The user chose OBS for screen recording. A separate profile and scene collection capture only the Chrome window at 1080p with audio muted. OBS crashed once opening settings and recovered in Safe Mode; no crash report was uploaded. Recording starts after the remaining live lifecycle and investigation checks pass.
+
+## October 1, 2026 — live investigation and lifecycle checks complete
+
+The synthetic lifecycle was ingested in three stages: UNREVIEWED, newer BENIGN, then an older MALICIOUS revision arriving last. Browser checks proved queue counts 1→0→0, history counts 1→2→3, BENIGN still current, and unchanged original detection time. All 193 nested originals matched mapped source evidence. Selected-host results matched 8 expected findings; the shared-hash pivot matched 25 across 9 hosts; all 33 warning findings and the unknown TRIAGED status remained visible. Saved all three reports privately with no schedule. The independent test report now marks all live application checks passed.
+
+OBS also became unresponsive during a recording attempt. Recovered it through Activity Monitor and reopened in Safe Mode. Changed the isolated reference profile to hardware Apple H.264 and Matroska at 1920×1080/30fps. An 18-second test saved successfully and its extracted frame showed a readable Splunk queue. Browser policy blocks local file pages, so the reference captures the live Splunk workflow only; the final user-narrated script includes terminal/report steps using additional capture sources. No blocked file access was worked around.
