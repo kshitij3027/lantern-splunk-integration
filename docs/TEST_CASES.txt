@@ -1,7 +1,7 @@
 LANTERN TO SPLUNK PROTOTYPE — TEST CASES AND VERIFICATION RECORD
 Version: 0.1.0
-Recorded: October 1, 2026, 9:56 PM America/Los_Angeles
-Status: AUTOMATED SUITE AND LIVE PROTOTYPE CHECKS PASSED; FINAL RELEASE/RECORDING OPEN
+Updated: October 1, 2026, America/Los_Angeles
+Status: AUTOMATED, LIVE PROTOTYPE, AND REFERENCE VIDEO CHECKS PASSED; FINAL DELIVERY OPEN
 
 1. WHAT WAS ACTUALLY RUN
 
@@ -724,11 +724,19 @@ Procedure: Inspect ZIP contents for source/docs/tests, secret exclusion, absence
 local ledger/cache/venv/Splunk binaries; verify upload/access; play complete video.
 Expected: Playable and readable end-to-end recording; final narrated submission
 within required 3–4 minutes; intended recipient can access final artifacts.
-Actual/status: PENDING for final release and recording closeout.
-  Reference screen capture: awaiting finished-file metadata and playback validation.
+Actual/status: REFERENCE PASSED; final narrated release/access remain pending.
+  Reference screen capture: OBS recording saved, losslessly remuxed to a silent
+    H.264 MP4; 1920x1080, 30fps, 283.4 seconds. Full decode completed with no
+    errors; contact sheet and full-resolution evidence/pivot frames inspected.
+    QuickTime opened it and playback advanced. This verifies a Splunk-only
+    reference, not the terminal/report steps or the final 3–4 minute narrated take.
+    Private evidence: private/verification/recording-verification.json.
   Final narrated assessment video: user rehearsal/narration and 3–4 minute final
     playback verification remain pending.
-  Final refreshed ZIP and recipient-access/upload checks: remain pending.
+  Code ZIP release: rerun the clean-package verification when refreshing the
+    archive; the exact archive checksum/result is recorded privately in
+    private/verification/final-zip-reproduction.json.
+  Recipient-access/upload checks: remain pending.
 A silent reference recording is distinct from the user's final narrated assessment
 submission; do not mark the narrated-video gate passed because a reference exists.
 

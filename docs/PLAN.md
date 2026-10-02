@@ -9,7 +9,7 @@ Approved October 1, 2026. Scope: a file-based Lantern export integration with re
 5. Integrate a CLI for validation, dry run, and send. Produce readable and structured quality reports. Complete.
 6. Verify real ingestion and exact finding identities in Splunk; verify repeat imports and latest-disposition searches. Complete: exact-set indexing, unchanged replay, disposition lifecycle, original evidence, host/hash pivots, warning preservation, and three private saved reports passed.
 7. Test failures and clean-environment reproduction. Create a detailed plain-text test-case report. Automated cases, fresh wheel installation, and review-candidate ZIP extraction/installation pass. All live application checks passed.
-8. Finish README, mapping decisions, demo narration/action script, and post-mortem. Documentation is ready for review. Record the silent Splunk reference using OBS, then rehearse the complete narrated operator/analyst journey.
+8. Finish README, mapping decisions, demo narration/action script, and post-mortem. Documentation is ready for review. Silent 1080p Splunk reference recorded in OBS and verified. Rehearse the complete narrated operator/analyst journey next.
 9. Package the reviewer ZIP separately from the public repository. The ZIP may include the supplied input; public fixtures remain synthetic.
 10. Rehearse the narrated final video and verify recipient access before final handoff. Clean up local/Cloud trials only after completed delivery.
 
@@ -23,4 +23,4 @@ Core: correct mapping, quality handling, real ingestion, replay behavior, tests,
 
 ## Verification checkpoint
 
-Code checkpoint `7bff801`: 279 automated cases pass locally on macOS/Python 3.14.2. The GitHub Actions Python 3.11 and 3.14 Linux matrix also passed. See the test report for case-level details and the separate status of browser/manual checks. Independent live checks now confirm the exact 193 indexed pairs, unchanged replay, the exact 24-row queue, and correct latest disposition after out-of-order updates. The reference recording, final narrated submission, and post-delivery trial cleanup are still outstanding.
+Code checkpoint `7bff801`: 279 automated cases pass locally on macOS/Python 3.14.2. The GitHub Actions Python 3.11 and 3.14 Linux matrix also passed. See the test report for case-level details and the separate status of browser/manual checks. Independent live checks now confirm the exact 193 indexed pairs, unchanged replay, the exact 24-row queue, and correct latest disposition after out-of-order updates. The silent Splunk reference passed file/visual/player checks. Final narrated submission, recipient access, and post-delivery trial cleanup are still outstanding.
