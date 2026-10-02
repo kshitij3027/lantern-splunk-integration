@@ -8,7 +8,7 @@ Approved October 1, 2026. Scope: a file-based Lantern export integration with re
 4. Add sequential HEC delivery and a local SQLite attempt/acceptance ledger. Distinguish acceptance from indexing and uncertain delivery from rejection. Complete; actual first import received 193 HEC acceptance responses.
 5. Integrate a CLI for validation, dry run, and send. Produce readable and structured quality reports. Complete.
 6. Verify real ingestion and exact finding identities in Splunk; verify repeat imports and latest-disposition searches. Pending browser sign-in; HEC acceptance is established, searchable indexing is not yet independently checked.
-7. Test failures and clean-environment reproduction. Create a detailed plain-text test-case report. Automated cases and fresh wheel installation pass; final ZIP extraction check and report closeout are in progress.
+7. Test failures and clean-environment reproduction. Create a detailed plain-text test-case report. Automated cases, fresh wheel installation, and review-candidate ZIP extraction/installation pass. Final live-check closeout remains pending.
 8. Finish README, mapping decisions, demo narration/action script, and post-mortem. Record an end-to-end walkthrough using the user's selected recording tool.
 9. Package the reviewer ZIP separately from the public repository. The ZIP may include the supplied input; public fixtures remain synthetic.
 10. Rehearse the narrated final video and verify recipient access before final handoff. Clean up local/Cloud trials only after completed delivery.

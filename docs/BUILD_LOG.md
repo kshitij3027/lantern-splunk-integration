@@ -33,3 +33,7 @@ Validation at this checkpoint: **279 automated cases passed** on Python 3.14.2/m
 GitHub Actions passed the core checkpoint on both Python 3.11 and Python 3.14 under Ubuntu. Added a detailed plain-text report covering all 97 test functions / 279 parameterized cases, field-by-field mapping decisions, a timed narration/action script, and a living retrospective. Created and validated three synthetic lifecycle fixtures for the pending live current-state check.
 
 A second independent documentation audit checked claims against the implementation and outstanding browser work. It corrected test-count/lifecycle wording and prompted explicit reviewer-package input paths and native Splunk start/stop instructions. The recording is still pending; no video artifact or live search verification is claimed.
+
+## October 1, 2026 — ZIP reproduction checkpoint
+
+Built a curated private reviewer ZIP containing source, tests, documentation, synthetic examples, and the unchanged supplied input/schema. Verified its checksum manifest, excluded live secrets/configuration/ledger/cache/virtual environments, then extracted into a fresh directory and installed into a new virtual environment. All 279 tests passed again; the installed CLI outside the source tree reproduced the assessment preview (193 eligible, 7 quarantined, 33 warnings, exit 2). This is a review candidate; browser E2E, recording, upload/access verification, and final submission are still pending.

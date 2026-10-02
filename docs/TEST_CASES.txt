@@ -583,7 +583,8 @@ Expected/observed: Fresh wheel installed outside the checkout; installed CLI ran
 the public synthetic preview successfully, reporting four eligible records and
 one warning row, with exit 2 for quality issues.
 Status: PASS for installed-package offline execution, as verified by project lead.
-The fresh final ZIP extraction and full documented reviewer path remain pending.
+A subsequent review-candidate ZIP extraction/installation also passed (L07).
+The final submission archive will be refreshed after live verification.
 
 P05 — Prepared synthetic lifecycle input
 Expected/observed: Three public lifecycle files prepared and validated offline:
@@ -591,7 +592,7 @@ initial UNREVIEWED, newer BENIGN, and stale MALICIOUS history.
 Status: PASS for fixture preparation/offline validation, as verified by project
 lead. They have NOT been sent to real Splunk yet; no live lifecycle claim is made.
 
-9. LIVE BROWSER, REPRODUCTION, AND RELEASE GATES — PENDING
+9. LIVE BROWSER, REPRODUCTION, AND RELEASE GATES — MIXED STATUS
 
 Do not change these to PASS based solely on HTTP acceptance, unit tests, or total
 counts. Add the actual observation, evidence location, and date after execution.
@@ -642,7 +643,14 @@ Procedure: Extract curated ZIP into a fresh directory; create a fresh virtual
 environment; follow README install, test, offline validate, and preview commands.
 Expected: Documented commands succeed without hidden working-tree dependencies;
 all public examples synthetic; live path requires only documented Splunk setup.
-Actual/status: PENDING.
+Actual/status: PASS for review candidate from checkpoint 220c8d4. Extracted to a
+fresh temporary directory, verified every manifest checksum, installed in a fresh
+venv, and ran 279 tests (all passed in 2.63 seconds). The installed CLI outside the
+source tree produced the private assessment preview: 193 eligible, 7 quarantined,
+33 warnings, exit 2. Imported package location resolved inside that new venv.
+Evidence: private/verification/zip-reproduction.json and package-manifest.json
+(retained privately; neither credentials nor private evidence are published).
+Final refreshed archive and live destination steps remain separate release gates.
 
 L08 — Release and recording verification
 Procedure: Inspect ZIP contents for source/docs/tests, secret exclusion, absence of
