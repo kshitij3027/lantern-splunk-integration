@@ -68,3 +68,10 @@ Validation: checked report filters against existing real output, reviewed all fi
 ## October 1, 2026 — introduce the problem before the demonstration
 
 At the user’s request, added a 30-second opening explaining what the importer does, the analyst problem, and the choice to use Splunk’s existing interface. Shortened the empty-state and dry-run segments so the complete video targets 3:55, including the introduction. The original eight action phases keep their numbers and commands. Synchronized the public narration, private illustrated guide, and current plan; no ingestion or recording was performed for this documentation change.
+
+
+## October 2, 2026 — user recording supplied and final package refresh
+
+The user supplied a recording uploaded to Google Drive. The project lead verified its MP4 file type and size of 258,695,408 bytes; Drive was still processing it for playback. Content, duration, complete playback, and recipient access have not yet been independently verified. Updated current documentation to distinguish this upload milestone from media acceptance; earlier capture plans and reference-recording checks remain historical evidence.
+
+The reviewer code ZIP is being refreshed from committed source with the unchanged supplied input/schema and clear reviewer instructions. The root README now explicitly covers the approach, supplied-file run commands, mapping decisions, and concepts that do not map cleanly, with links to included detail. Fresh extraction, installation, all 279 automated tests, and an installed-CLI assessment dry run are the package acceptance checks. Credentials, local profiles, ledgers, raw private reports, and recordings remain excluded. Final sharing/access verification and post-delivery trial cleanup remain open.

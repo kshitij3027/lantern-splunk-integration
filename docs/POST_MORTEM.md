@@ -1,6 +1,6 @@
 # Build retrospective — living document
 
-Status: implementation, automated verification, live indexed-set/replay verification, and disposition lifecycle checks are complete. Original-evidence and investigation-pivot checks also passed. The silent reference recording is complete and verified. Final narration, submission, and trial cleanup remain open. This document is updated as those steps happen.
+Status: implementation, automated verification, live indexed-set/replay verification, and disposition lifecycle checks are complete. Original-evidence and investigation-pivot checks also passed. The silent reference recording is complete and verified. The user has now supplied a recording uploaded to Google Drive. Its content, duration, playback, and recipient access remain unverified; refreshed code packaging and delivery closeout are in progress. Trial cleanup remains open.
 
 ## Intended outcome
 
@@ -51,4 +51,4 @@ Ask analysts whether the queue and pivots match their daily investigations. Conf
 
 ## Closeout still required
 
-Review the completed live test report and silent reference, rehearse and record the narrated video, verify the refreshed reviewer ZIP and recipient access, and preserve the submitted artifacts. Only after delivery, close the Cloud trial if provisioned and remove/stop the local trial, revoke its token, and verify no paid/billable resource remains. Do not delete the user's entire Splunk account.
+Review the user-supplied recording for content, duration, and playback; verify the refreshed reviewer ZIP and recipient access; and preserve the submitted artifacts. The Drive upload was identified as an MP4 of 258,695,408 bytes and was still processing for playback at the latest check; upload metadata alone does not establish video quality or successful recipient access. Only after delivery, close the Cloud trial if provisioned and remove/stop the local trial, revoke its token, and verify no paid/billable resource remains. Do not delete the user's entire Splunk account.

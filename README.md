@@ -4,6 +4,10 @@ A Python command-line importer turns a Lantern JSON export into searchable Splun
 
 This is Scenario 1: a file-based prototype using Splunk's existing analyst interface. It does not fetch a Lantern API, run detection rules, or claim full CIM/Enterprise Security compatibility. The public sample is entirely synthetic. Supplied assessment inputs, tokens, local profiles, and generated evidence stay outside Git.
 
+## Approach
+
+One eligible Lantern record becomes one Splunk event representing a rule match on a file, host, and collection. The importer validates the entire export before delivery so every member of an identity conflict is withheld. It quarantines unusable rows with their original evidence and reasons, maps eligible rows into searchable JSON fields, and sends them one at a time through verified HTTPS HEC. A local ledger records accepted source versions for repeat imports. Analysts then use Splunk searches for the current review queue, finding history, and related evidence; Lantern has already run the detection rules.
+
 ## Requirements and installation
 
 - Python 3.11+ on macOS or Linux (ledger locking uses `fcntl`).
@@ -45,6 +49,24 @@ Each run prints its summary in the terminal. Reports in the output directory inc
 Reports contain security evidence. Store them privately and use a separate output directory for each important run. They are operator artifacts, not an additional analyst dashboard. Input files are never modified.
 
 Exit codes: **0** completed without warnings/quarantine; **2** completed with quality issues; **1** operational/input/configuration/delivery failure. Duplicate input rows are reported but do not alone cause exit 2. A mixed-quality file can send its eligible rows successfully and still return 2. A fatal document error sends nothing.
+
+## Run the supplied assessment export from the reviewer ZIP
+
+The private reviewer ZIP additionally includes the unchanged supplied `input/events.json` and `input/SCHEMA.md`. These files are excluded from the public repository. After the installation above, run from the extracted project directory:
+
+```sh
+lantern-splunk validate --input input/events.json --output output/assessment-validation
+lantern-splunk send --input input/events.json --dry-run --output output/assessment-preview
+```
+
+Expected: **200 rows, 193 eligible (33 with warnings), and 7 quarantined**, with 24 high/critical UNREVIEWED queue candidates. Both commands return 2 because of the reported quality issues. The preview makes no network requests. For live delivery, prepare your own `local.toml` as described below, use source `lantern:assessment`, then run:
+
+```sh
+lantern-splunk send --input input/events.json --config local.toml --state output/assessment.sqlite --output output/assessment-import
+lantern-splunk send --input input/events.json --config local.toml --state output/assessment.sqlite --output output/assessment-replay
+```
+
+In a fresh destination scope, expect 193 acceptances on the first send and 193 previously accepted versions with zero HTTP attempts on the repeat. Independently check Splunk indexing and the 24-row current queue as described in the investigation section; HEC acceptance alone does not prove indexing.
 
 ## Starting and stopping a local Splunk installation
 
@@ -89,6 +111,21 @@ Each search explicitly scopes index, source, and sourcetype. Change its source t
 
 Whole-snapshot validation catches missing essentials, invalid types/times, immutable ID collisions, collection completion conflicts, and ambiguous tied revisions before sending. Decimal size strings can be converted losslessly with a warning; unknown statuses, empty pattern lists, out-of-bounds offsets, and inconsistent hash/size evidence remain inspectable with warnings. No missing identity or evidence is invented. See the [complete mapping contract](docs/MAPPING.md), [decisions](docs/DECISIONS.md), and tests for precise boundaries.
 
+## Fields that do not map cleanly
+
+Selected Splunk CIM Alerts names provide useful vocabulary, but this prototype does not install a complete CIM data model or create Enterprise Security notable events. The following source concepts retain explicit custom fields or nested evidence instead of being forced into unrelated standard fields:
+
+| Lantern concept | Decision and reason |
+|---|---|
+| Numerical severity | Keep the original score in `severity_id`; derive `severity` using the documented prototype bands. These bands are a product policy, not a required Splunk conversion. |
+| Analyst disposition, analyst, comment, and update time | Preserve dedicated `disposition_*` fields. Analyst judgment and review history are independent of rule severity and event match time. |
+| Collection ID, job, requester, and completion time | Keep `collection_*` provenance fields. A collection groups findings; it is not a finding identity or an incident. |
+| Rule namespace, version, and author | Keep `rule_*` metadata alongside the mapped `signature`; no absent standard rule ID is invented. |
+| Matched pattern IDs and byte offsets | Preserve each ID/offset pair in `lantern.matched_patterns` and expose `pattern_count`. Separate flattened arrays could lose the pair relationship. |
+| Unknown fields and questionable evidence | Retain the complete `lantern` record and explicit `quality_flags`; preserve unknown dispositions rather than converting them to UNREVIEWED. |
+
+The [complete mapping table and boundary rules](docs/MAPPING.md) cover every source field, and the [decision record](docs/DECISIONS.md) explains the tradeoffs.
+
 ## Delivery and revision behavior
 
 A canonical source-record hash identifies each version. The source excluding disposition identifies immutable evidence. The ledger scope includes destination endpoint, index, source, sourcetype, mapping version, and configured instance ID; tokens are excluded so token rotation does not force a resend. Change `instance_id` deliberately if replacing a Splunk instance at the same address.
@@ -110,4 +147,4 @@ Indexed quality flags describe the snapshot when a version was sent. The latest 
 - [Timed narration and screen actions](docs/DEMO_SCRIPT.md)
 - [Living post-mortem](docs/POST_MORTEM.md)
 
-Implementation and live verification are recorded as they are completed. The test report distinguishes automated results from pending live/browser checks. Trial cleanup is a post-delivery task, after preserving the submitted artifacts.
+Implementation, all 279 automated cases, and the independent live Splunk checks are complete. The user has supplied a recording uploaded to Google Drive; its content, duration, playback, and recipient access have not yet been independently verified. The reviewer ZIP is being refreshed from committed source. Trial cleanup remains a post-delivery task, after preserving the submitted artifacts.

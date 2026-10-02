@@ -1,10 +1,10 @@
 # Narrated walkthrough — target 3:55
 
-The final video pairs a 30-second introduction with eight demo phases using real terminal and Splunk footage. Capture the actions silently first; remove loading/navigation pauses during editing, then narrate over the completed movie with webcam in OBS. The recording operator need not execute every action within the final playback timestamps.
+This storyboard targets a 30-second introduction followed by eight demo phases using real terminal and Splunk footage. Capture the actions silently first; remove loading/navigation pauses during editing, then narrate over the completed movie with webcam in OBS. The recording operator need not execute every action within the final playback timestamps.
 
 This script describes the supplied assessment export. Public synthetic examples produce different counts. The illustrated private recording guide contains the exact local paths, selected finding/host, browser links, and reference screenshots; assessment records and screenshots remain outside this public repository.
 
-**Capture status:** an isolated demo source has been prepared and verified empty. Its first import is pending. The success statements below are conditional on the actual new capture matching the expected results. Earlier live verification and the silent Splunk reference remain separate evidence.
+**Capture status:** the user has supplied a recording uploaded to Google Drive. Its content, duration, and playback have not yet been independently reviewed, so the success statements below remain conditional on the actual recording matching the expected results. The isolated demo source was verified empty when this storyboard was prepared; its recorded first-import results must be checked in the supplied video. Earlier live verification and the silent Splunk reference remain separate evidence.
 
 ## Before recording
 
@@ -101,4 +101,4 @@ The introduction and eight demo phases total 235 seconds: 30 seconds of context 
 
 ## Final narration and review
 
-Start the silent video with the 30-second title card, then edit the real app clips to the eight demo boundaries above. The complete video targets 3:55 including the introduction; do not add another intro or countdown. Play the completed silent movie in OBS alongside webcam capture and microphone narration. Rehearse twice, check readable fields and synchronized narration, and play back the final exported file before handoff. The final narrated video, Drive delivery/access verification, and post-delivery trial cleanup remain outstanding.
+Start the silent video with the 30-second title card, then edit the real app clips to the eight demo boundaries above. The complete video targets 3:55 including the introduction; do not add another intro or countdown. Play the completed silent movie in OBS alongside webcam capture and microphone narration. Rehearse twice, check readable fields and synchronized narration, and play back the final exported file before handoff. The user-supplied recording is uploaded; its content/duration/playback review, recipient-access verification, and post-delivery trial cleanup remain outstanding. The target duration above is the storyboard duration, not a measurement of the uploaded file.
