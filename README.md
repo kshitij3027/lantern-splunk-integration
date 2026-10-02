@@ -147,4 +147,4 @@ Indexed quality flags describe the snapshot when a version was sent. The latest 
 - [Timed narration and screen actions](docs/DEMO_SCRIPT.md)
 - [Living post-mortem](docs/POST_MORTEM.md)
 
-Implementation, all 279 automated cases, and the independent live Splunk checks are complete. The user has supplied a recording uploaded to Google Drive; its content, duration, playback, and recipient access have not yet been independently verified. The reviewer ZIP is being refreshed from committed source. Trial cleanup remains a post-delivery task, after preserving the submitted artifacts.
+Implementation, all 279 automated cases, and the independent live Splunk checks are complete. See the [detailed test report](docs/TEST_CASES.txt) for automated coverage, actual indexed-data checks, and their results.
